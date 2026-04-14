@@ -1,8 +1,20 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+This is a Next.js frontend for the Interview Simulator backend in [interview-simulator](../interview-simulator).
 
 ## Getting Started
 
-First, run the development server:
+First, create your frontend environment file:
+
+```bash
+cp .env.local.example .env.local
+```
+
+Set the Django API base URL if needed:
+
+```bash
+NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
+```
+
+Then run the development server:
 
 ```bash
 npm run dev
@@ -14,21 +26,44 @@ pnpm dev
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) with your browser to use the routed frontend.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The page integrates these backend APIs:
 
-## Learn More
+- `GET /health/`
+- `POST /api/interview/auth/register/`
+- `POST /api/auth/token/`
+- `POST /api/auth/token/refresh/`
+- `POST /api/interview/start/`
+- `GET /api/interview/<id>/next/`
+- `POST /api/interview/answer/`
+- `GET /api/interview/<id>/summary/`
 
-To learn more about Next.js, take a look at the following resources:
+## Backend Setup Notes
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Make sure the Django backend is running.
+- Make sure CORS is enabled for `http://localhost:3000`.
+- The frontend stores JWT tokens in local storage for local development.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Routes
 
-## Deploy on Vercel
+- `/` gives a lightweight product entry page.
+- `/auth` handles registration, login, manual token refresh, and backend URL configuration.
+- `/interview` handles protected interview APIs and automatically refreshes access tokens after a `401` response.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Available UI Actions
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Check backend health
+- Register a user
+- Log in and store JWT tokens locally
+- Refresh the access token manually when needed
+- Auto-refresh the access token during protected API calls
+- Start an interview session
+- Fetch the next question
+- Submit an answer
+- Load interview summary output
+
+## LLM Integration Status
+
+- The frontend is already prepared to render real model-backed evaluation output from the backend.
+- To complete real LLM evaluation, provide the purchased model API details for the Django backend configuration.
