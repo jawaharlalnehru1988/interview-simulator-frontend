@@ -305,21 +305,6 @@ export default function PersonalCoachPage() {
 
   return (
     <main className="shell route-shell">
-      <section className="route-hero">
-        <div>
-          <p className="eyebrow">Personal Coach Workspace</p>
-          <h1>Learn any topic with adaptive AI coaching.</h1>
-          <p className="hero-copy">
-            Enter a topic, pick a generated subtopic, study the lesson, answer a coach question,
-            and improve until your answer quality is strong enough to progress.
-          </p>
-        </div>
-        <div className="hero-links">
-          <Link className="secondary-button link-button" href="/interview">
-            Back to interview route
-          </Link>
-        </div>
-      </section>
 
       {errorMessage ? <p className="banner error">{errorMessage}</p> : null}
 
@@ -345,7 +330,7 @@ export default function PersonalCoachPage() {
           </form>
         </article>
 
-        <article className="card stack-card">
+        <article className="card stack-card tall-card">
           <div className="card-heading">
             <p className="eyebrow">2. Subtopic Choice</p>
             <h2>Select What To Learn</h2>
@@ -502,7 +487,7 @@ export default function PersonalCoachPage() {
           )}
         </article>
 
-        <article className="card stack-card">
+        <article className="card stack-card full-card">
           <div className="card-heading">
             <p className="eyebrow">5. Your Progress</p>
             <h2>Revisit History</h2>

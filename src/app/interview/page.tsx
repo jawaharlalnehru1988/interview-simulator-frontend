@@ -131,18 +131,37 @@ export default function InterviewPage() {
     }
 
     await runAction("Start Interview", async () => {
+      // 1. Start the interview
       const response = await startInterview(session.apiBaseUrl, authState, {
         topic: session.topic,
         round: session.roundType,
       });
-      updateSession({ interviewId: response.interview_id });
+
+      const newInterviewId = response.interview_id;
+      updateSession({ interviewId: newInterviewId });
       setCurrentQuestion(null);
       setAnswerText("");
+      setSelectedMcqOption("");
       setLastEvaluation(null);
       setSummary(null);
+
       pushActivity(
         "Start Interview",
-        `Interview ${response.interview_id} created for ${response.topic}.`,
+        `Interview ${newInterviewId} created for ${response.topic}.`,
+      );
+
+      // 2. Fetch the first question immediately
+      pushActivity("Fetch Question", "Automatically loading the first question...");
+      const questionResponse = await getNextQuestion(
+        session.apiBaseUrl,
+        authState,
+        newInterviewId,
+      );
+
+      setCurrentQuestion(questionResponse);
+      pushActivity(
+        "First Question",
+        `Loaded question ${questionResponse.question_number} at ${questionResponse.difficulty} difficulty.`,
       );
     });
   }
@@ -232,28 +251,26 @@ export default function InterviewPage() {
   }
 
   function extractCleanedQuestion(question: string, hasOptions: boolean): string {
-    if (!hasOptions) return question;
-    // Remove the options (A), B), C), D)) from the end of the question
-    const optionPattern = /^(.+?)(?:\s+[A-D]\)\s+.+)*$/;
-    const match = question.match(optionPattern);
-    if (match && match[1]) {
-      // Find the last occurrence of "A)" or "B)" or "C)" or "D)" and remove from there
-      const lastOptionIndex = Math.max(
-        question.lastIndexOf("A)"),
-        question.lastIndexOf("B)"),
-        question.lastIndexOf("C)"),
-        question.lastIndexOf("D)"),
-      );
-      if (lastOptionIndex > 0) {
-        // Look backwards to find the start of the options section
-        const beforeOptions = question.substring(0, lastOptionIndex).trim();
-        // Only remove if options section is substantial (has multiple lines)
-        if (beforeOptions.length > 50) {
-          return beforeOptions;
-        }
-      }
+    let cleaned = question.trim();
+
+    // 1. Remove redundant "Question: " prefix if present
+    cleaned = cleaned.replace(/^Question:\s*/i, "");
+
+    // 2. Identify the start of the MCQ options block using a robust Regex.
+    // This looks for the first occurrence of:
+    // (space or punctuation) followed by (A or B or 1) followed by ) or . or encased in ()
+    // Examples matched: " A)", " A.", " (A)", "?A)", ".A)"
+    const mcqPattern = /[\s?.!]\s*([A-D][).]|(?:\([A-D]\))|1[).])/;
+    const match = cleaned.match(mcqPattern);
+
+    if (match && match.index !== undefined) {
+      // Truncate at the start of the match
+      // We keep everything before the whitespace/punctuation that started the match
+      // or just trim the result.
+      cleaned = cleaned.substring(0, match.index + 1).trim();
     }
-    return question;
+
+    return cleaned;
   }
 
   if (!ready) {
@@ -284,69 +301,11 @@ export default function InterviewPage() {
 
   return (
     <main className="shell route-shell">
-      <section className="route-hero">
-        <div>
-          <p className="eyebrow">Interview Workspace</p>
-          <h1>Run the interview flow on a dedicated route.</h1>
-          <p className="hero-copy">
-            This page is focused entirely on protected interview APIs. Real model-backed scoring will
-            appear here automatically once the backend receives your purchased LLM provider details.
-          </p>
-        </div>
-        <div className="hero-links">
-          <button className="ghost-button" onClick={handleHealthCheck} type="button">
-            Check backend health
-          </button>
-          <Link className="secondary-button link-button" href="/auth">
-            Back to auth route
-          </Link>
-        </div>
-      </section>
 
-      <section className="status-strip">
-        <div className="status-pill">
-          <span>Backend</span>
-          <strong>{healthState}</strong>
-        </div>
-        <div className="status-pill">
-          <span>User</span>
-          <strong>{session.username || "current session"}</strong>
-        </div>
-        <div className="status-pill">
-          <span>Interview</span>
-          <strong>{session.interviewId ?? "none"}</strong>
-        </div>
-        <div className="status-pill accent">
-          <span>Busy</span>
-          <strong>{busyLabel || "idle"}</strong>
-        </div>
-      </section>
 
       {errorMessage ? <p className="banner error">{errorMessage}</p> : null}
 
       <section className="route-grid">
-        <article className="card stack-card">
-          <div className="card-heading">
-            <p className="eyebrow">Connection</p>
-            <h2>Session config</h2>
-          </div>
-          <label className="field">
-            <span>API base URL</span>
-            <input
-              value={session.apiBaseUrl}
-              onChange={(event) => updateSession({ apiBaseUrl: event.target.value })}
-            />
-          </label>
-          <div className="token-box">
-            <span>Access token</span>
-            <code>{`${session.accessToken.slice(0, 32)}...`}</code>
-          </div>
-          <div className="button-row">
-            <button className="secondary-button" onClick={handleResetWorkspace} type="button">
-              Clear local session
-            </button>
-          </div>
-        </article>
 
         <article className="card stack-card">
           <div className="card-heading">
@@ -558,24 +517,6 @@ export default function InterviewPage() {
           )}
         </article>
 
-        <article className="card stack-card tall-card">
-          <div className="card-heading">
-            <p className="eyebrow">Activity</p>
-            <h2>Request timeline</h2>
-          </div>
-          <div className="activity-list">
-            {activity.length ? (
-              activity.map((item) => (
-                <div className="activity-item" key={item.id}>
-                  <strong>{item.title}</strong>
-                  <span>{item.detail}</span>
-                </div>
-              ))
-            ) : (
-              <p className="muted-copy">Run an interview action to see the request timeline.</p>
-            )}
-          </div>
-        </article>
       </section>
     </main>
   );

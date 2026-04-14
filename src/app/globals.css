@@ -100,18 +100,21 @@ textarea {
 	border-radius: 999px;
 	background: rgba(255, 250, 243, 0.68);
 	border: 1px solid rgba(58, 42, 33, 0.12);
+	transition: all 0.2s ease;
 }
 
-.user-chip {
-	display: inline-flex;
-	align-items: center;
-	gap: 8px;
-	padding: 6px 10px 6px 6px;
-	border-radius: 999px;
-	border: 1px solid rgba(58, 42, 33, 0.12);
-	background: rgba(255, 250, 243, 0.72);
-	min-width: 92px;
+.nav-link.active {
+	background: #b44f2b;
+	color: #fff;
+	border-color: #b44f2b;
+	box-shadow: 0 4px 12px rgba(180, 79, 43, 0.25);
 }
+
+.nav-link:hover:not(.active) {
+	background: rgba(255, 250, 243, 0.95);
+	border-color: rgba(180, 79, 43, 0.3);
+}
+
 
 .user-avatar {
 	display: grid;
@@ -305,7 +308,11 @@ textarea {
 }
 
 .tall-card {
-	grid-column: span 6;
+	grid-column: span 8;
+}
+
+.full-card {
+	grid-column: span 12;
 }
 
 .stack-card {

@@ -16,8 +16,11 @@ const bodyFont = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "Interview Simulater Frontend",
+  title: "Interview Simulator",
   description: "Next.js frontend for the Interview Simulator backend APIs.",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({
