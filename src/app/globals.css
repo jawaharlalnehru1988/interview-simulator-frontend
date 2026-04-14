@@ -116,16 +116,33 @@ textarea {
 }
 
 
+.user-menu-trigger {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 6px 14px;
+	border-radius: 999px;
+	border: 1px solid rgba(58, 42, 33, 0.12);
+	background: rgba(255, 250, 243, 0.72);
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.user-menu-trigger:hover {
+	background: rgba(255, 250, 243, 0.95);
+	border-color: rgba(180, 79, 43, 0.25);
+}
+
 .user-avatar {
 	display: grid;
 	place-items: center;
-	width: 30px;
-	height: 30px;
+	width: 32px;
+	height: 32px;
 	border-radius: 999px;
-	background: linear-gradient(135deg, rgba(180, 79, 43, 0.85), rgba(239, 197, 141, 0.9));
+	background: linear-gradient(135deg, #b44f2b, #efc58d);
 	color: #fff;
 	font-weight: 700;
-	font-size: 0.92rem;
+	font-size: 0.88rem;
 	text-transform: uppercase;
 }
 
@@ -136,7 +153,88 @@ textarea {
 	white-space: nowrap;
 	font-size: 0.9rem;
 	font-weight: 600;
-	color: rgba(45, 34, 28, 0.9);
+	color: var(--ink);
+}
+
+.user-menu-overlay {
+	position: absolute;
+	right: 0;
+	top: calc(100% + 10px);
+	min-width: 240px;
+	background: rgba(255, 250, 238, 0.96);
+	backdrop-filter: blur(14px);
+	border: 1px solid var(--line);
+	border-radius: 20px;
+	shadow: var(--shadow);
+	padding: 8px;
+	z-index: 1000;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	animation: menuSlideDown 240ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes menuSlideDown {
+	from { opacity: 0; transform: translateY(-8px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
+.user-menu-info {
+	padding: 12px 16px;
+	border-bottom: 1px solid rgba(58, 42, 33, 0.08);
+	margin-bottom: 6px;
+}
+
+.user-menu-info span {
+	display: block;
+	font-size: 10px;
+	text-transform: uppercase;
+	letter-spacing: 0.1em;
+	font-weight: 700;
+	color: var(--muted);
+}
+
+.user-menu-info strong {
+	display: block;
+	font-size: 0.9rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.user-menu-item {
+	display: flex;
+	align-items: center;
+	padding: 10px 14px;
+	border-radius: 12px;
+	font-size: 0.92rem;
+	font-weight: 500;
+	color: var(--ink);
+	transition: all 0.16s ease;
+	cursor: pointer;
+	border: none;
+	background: transparent;
+	width: 100%;
+	text-align: left;
+}
+
+.user-menu-item:hover {
+	background: rgba(180, 79, 43, 0.08);
+	color: var(--accent);
+}
+
+.user-menu-item.logout {
+	font-weight: 700;
+	color: var(--accent);
+}
+
+.user-menu-item.logout:hover {
+	background: rgba(180, 79, 43, 0.12);
+}
+
+.user-menu-separator {
+	height: 1px;
+	background: rgba(58, 42, 33, 0.06);
+	margin: 4px 8px;
 }
 
 .hero-panel,
