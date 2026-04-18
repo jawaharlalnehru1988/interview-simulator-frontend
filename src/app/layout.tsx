@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Space_Grotesk } from "next/font/google";
-import TopNavbar from "./TopNavbar";
+import ClientWrapper from "./ClientWrapper";
 import "./globals.css";
 
 const displayFont = Cormorant_Garamond({
@@ -31,10 +31,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${displayFont.variable} ${bodyFont.variable}`}>
-        <div className="site-frame">
-          <TopNavbar />
-          {children}
-        </div>
+        <ClientWrapper>{children}</ClientWrapper>
       </body>
     </html>
   );

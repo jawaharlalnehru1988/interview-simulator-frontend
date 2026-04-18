@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 import {
   ApiError,
@@ -49,6 +51,7 @@ export default function InterviewPage() {
   const [selectedMcqOption, setSelectedMcqOption] = useState("");
   const [lastEvaluation, setLastEvaluation] = useState<EvaluationResult | null>(null);
   const [summary, setSummary] = useState<InterviewSummaryResponse | null>(null);
+  const [showSuggestedAnswer, setShowSuggestedAnswer] = useState(false);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [busyLabel, setBusyLabel] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -65,6 +68,10 @@ export default function InterviewPage() {
     }
     saveClientSession(session);
   }, [ready, session]);
+
+  useEffect(() => {
+    setShowSuggestedAnswer(false);
+  }, [currentQuestion?.question_id]);
 
   function updateSession(patch: Partial<ClientSession>) {
     setSession((current) => ({ ...current, ...patch }));
@@ -360,6 +367,14 @@ export default function InterviewPage() {
             >
               Load summary
             </button>
+            <button
+              className="ghost-button"
+              disabled={!currentQuestion || Boolean(busyLabel)}
+              onClick={() => setShowSuggestedAnswer((current) => !current)}
+              type="button"
+            >
+              {showSuggestedAnswer ? "Hide answer" : "Show answer"}
+            </button>
           </div>
           <div className="question-panel">
             <div className="question-meta">
@@ -375,6 +390,18 @@ export default function InterviewPage() {
               )}
             </p>
           </div>
+
+          {showSuggestedAnswer ? (
+            <div className="coach-suggestion">
+              <p className="mcq-label">Suggested answer</p>
+              <div className="question-text">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {currentQuestion?.suggested_answer?.trim() ||
+                    "Suggested answer is not available for this question yet. Please fetch the next question."}
+                </ReactMarkdown>
+              </div>
+            </div>
+          ) : null}
 
           {session.roundType === "mcq" && currentQuestion?.mcq_options?.length ? (
             <div className="mcq-options-wrapper">

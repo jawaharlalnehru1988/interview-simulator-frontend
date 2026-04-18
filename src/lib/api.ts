@@ -47,6 +47,7 @@ export type NextQuestionResponse = {
   difficulty: string;
   question_number: number;
   status: string;
+  suggested_answer: string;
   mcq_options?: string[];
 };
 
@@ -89,6 +90,7 @@ export type StartCoachResponse = {
   session_id: number;
   topic: string;
   subtopics: string[];
+  lessons_by_subtopic?: Record<string, string[]>;
   stage: string;
   coach_prompt: string;
 };
@@ -97,6 +99,25 @@ export type ChooseCoachSubtopicResponse = {
   session_id: number;
   topic: string;
   subtopic: string;
+  lessons: string[];
+  practiced_subtopics?: string[];
+  practiced_lessons?: string[];
+  stage: string;
+  coach_prompt: string;
+};
+
+export type ChooseCoachLessonResponse = {
+  session_id: number;
+  topic: string;
+  subtopic: string;
+  selected_lesson: string;
+  practiced_subtopics?: string[];
+  practiced_lessons?: string[];
+  total_subtopics?: number;
+  practiced_subtopics_count?: number;
+  total_lessons?: number;
+  practiced_lessons_count?: number;
+  progress_percent?: number;
   stage: string;
   lesson: string;
   question: string;
@@ -107,6 +128,14 @@ export type CoachAnswerResponse = {
   session_id: number;
   topic: string;
   subtopic: string;
+  selected_lesson?: string;
+  practiced_subtopics?: string[];
+  practiced_lessons?: string[];
+  total_subtopics?: number;
+  practiced_subtopics_count?: number;
+  total_lessons?: number;
+  practiced_lessons_count?: number;
+  progress_percent?: number;
   score: number;
   strengths: string[];
   gaps: string[];
@@ -131,7 +160,18 @@ export type ResumeCoachResponse = {
   session_id: number;
   topic: string;
   subtopics: string[];
+  lessons_by_subtopic?: Record<string, string[]>;
   selected_subtopic: string;
+  selected_lesson: string;
+  available_lessons?: string[];
+  practiced_subtopics?: string[];
+  practiced_lessons?: string[];
+  practiced_lessons_map?: Record<string, string[]>;
+  total_subtopics?: number;
+  practiced_subtopics_count?: number;
+  total_lessons?: number;
+  practiced_lessons_count?: number;
+  progress_percent?: number;
   stage: string;
   lesson: string;
   question: string;
@@ -149,6 +189,7 @@ export type ResumeCoachResponse = {
 
 export type UserLearningProgressResponse = {
   user: string;
+  profile_ready?: boolean;
   attempted_topics: {
     interview_topics: string[];
     personal_coach_topics: string[];
@@ -172,6 +213,45 @@ export type UserLearningProgressResponse = {
       latest_score: number | null;
       average_score: number | null;
       suggested_next_subtopic: string;
+      practiced_subtopics?: string[];
+      practiced_lessons_map?: Record<string, string[]>;
+      total_subtopics?: number;
+      practiced_subtopics_count?: number;
+      total_lessons?: number;
+      practiced_lessons_count?: number;
+      progress_percent?: number;
+      last_updated: string;
+    }>;
+    job_description_analyzer: Array<{
+      analysis_id: number;
+      company_name: string;
+      recruiter_name: string;
+      application_last_date: string | null;
+      application_last_date_raw: string;
+      job_description_preview: string;
+      recruiter_intent: string;
+      created_at: string;
+      last_updated: string;
+    }>;
+    aspirations: Array<{
+      aspiration_id: number;
+      current_position: string;
+      target_job: string;
+      timeline_months: number;
+      readiness_score: number | null;
+      summary: string;
+      created_at: string;
+      last_updated: string;
+    }>;
+    hr_voice_calls: Array<{
+      session_id: number;
+      status: string;
+      question_count: number;
+      answered_count: number;
+      average_score: number | null;
+      pass_decision: boolean | null;
+      target_job: string;
+      company_name: string;
       last_updated: string;
     }>;
   };
@@ -180,6 +260,238 @@ export type UserLearningProgressResponse = {
     total_attempts: number;
     average_score: number | null;
   }>;
+};
+
+export type JobDescriptionAnalysisResponse = {
+  analysis_id: number;
+  analysis: {
+    recruiter_intent: string;
+    skill_tiers: {
+      strong_match: string[];
+      okay_match: string[];
+      low_priority: string[];
+    };
+    disclosed_salary: {
+      found: boolean;
+      currency: string;
+      minimum: number | null;
+      maximum: number | null;
+      unit: string;
+      raw_text: string;
+    };
+    market_salary_estimate: {
+      role_focus: string;
+      demandable_min: number;
+      demandable_max: number;
+      unit: string;
+      confidence: "low" | "medium" | "high";
+      reasoning: string[];
+    };
+    recommendations: string[];
+    encouragement: string;
+  };
+  application_context: {
+    recruiter_name: string;
+    company_name: string;
+    application_last_date: string | null;
+    application_last_date_raw: string;
+  };
+};
+
+export type ResumeJobDescriptionAnalysisResponse = JobDescriptionAnalysisResponse & {
+  job_description: string;
+  created_at: string;
+  last_updated: string;
+};
+
+export type JobDescriptionAnalyzePayload = {
+  jobDescription: string;
+  recruiterName?: string;
+  companyName?: string;
+  applicationLastDate?: string;
+};
+
+export type CreateAspirationPayload = {
+  currentPosition: string;
+  targetJob: string;
+  timelineMonths?: number;
+  currentSkills?: string[];
+  constraints?: string;
+  additionalContext?: string;
+};
+
+export type AspirationRoadmap = {
+  summary: string;
+  readiness_score: number;
+  gap_analysis: string[];
+  roadmap_phases: Array<{
+    phase: string;
+    duration: string;
+    focus: string;
+    actions: string[];
+    deliverables: string[];
+  }>;
+  weekly_execution: string[];
+  interview_preparation: string[];
+  encouragement: string;
+};
+
+export type AspirationResponse = {
+  aspiration_id: number;
+  current_position: string;
+  target_job: string;
+  timeline_months: number;
+  current_skills: string[];
+  constraints: string;
+  additional_context: string;
+  roadmap: AspirationRoadmap;
+  checklist?: AspirationChecklist | null;
+  created_at: string;
+  last_updated: string;
+};
+
+export type AspirationChecklist = {
+  id: number;
+  completed_count: number;
+  total_count: number;
+  progress_percent: number;
+  items: Array<{
+    id: string;
+    week: number;
+    category: string;
+    title: string;
+    completed: boolean;
+  }>;
+  weeks: Array<{
+    week: number;
+    items: Array<{
+      id: string;
+      week: number;
+      category: string;
+      title: string;
+      completed: boolean;
+    }>;
+  }>;
+};
+
+export type CandidateProfile = {
+  current_position: string;
+  current_company: string;
+  total_experience_years: number | null;
+  primary_skills: string[];
+  current_salary: string;
+  salary_expectation: string;
+  notice_period: string;
+  reason_for_leaving: string;
+  career_gap_details: string;
+  highest_education: string;
+  preferred_locations: string[];
+  preferred_role: string;
+  additional_notes: string;
+};
+
+export type CandidateProfileUpdateResponse = {
+  detail: string;
+  profile: CandidateProfile;
+};
+
+export type StartHRVoiceInterviewPayload = {
+  aspirationId?: number;
+  jdAnalysisId?: number;
+  questionCount?: number;
+};
+
+export type StartHRVoiceInterviewResponse = {
+  session_id: number;
+  status: string;
+  question_count: number;
+  current_question_index: number;
+  current_question: string;
+  context: {
+    target_job: string;
+    company_name: string;
+    profile: {
+      current_position: string;
+      current_company: string;
+      total_experience_years: number | null;
+      primary_skills: string[];
+      salary_expectation: string;
+      notice_period: string;
+      preferred_role: string;
+      is_profile_complete: boolean;
+    };
+  };
+};
+
+export type HRVoiceAnswerEvaluation = {
+  score: number;
+  strengths: string[];
+  weaknesses: string[];
+  improvements: string[];
+};
+
+export type HRVoiceFinalFeedback = {
+  pass: boolean;
+  average_score: number;
+  overall_feedback: string;
+  strong_answers: Array<{
+    question: string;
+    answer: string;
+    score: number;
+    strengths: string[];
+  }>;
+  weak_answers: Array<{
+    question: string;
+    answer: string;
+    score: number;
+    weaknesses: string[];
+    improvements: string[];
+  }>;
+  improvement_plan: string[];
+};
+
+export type HRVoiceAnswerResponse = {
+  session_id: number;
+  status: string;
+  question_score: number;
+  evaluation: HRVoiceAnswerEvaluation;
+  next_question_index?: number;
+  next_question?: string;
+  final_feedback?: HRVoiceFinalFeedback;
+  pass?: boolean;
+};
+
+export type HRVoiceResumeResponse = {
+  session_id: number;
+  status: string;
+  question_count: number;
+  current_question_index: number;
+  current_question: string;
+  turns: Array<{
+    question: string;
+    answer: string;
+    score: number;
+    strengths: string[];
+    weaknesses: string[];
+    improvements: string[];
+    created_at: string;
+  }>;
+  final_feedback: HRVoiceFinalFeedback | null;
+  pass: boolean | null;
+  context: {
+    target_job: string;
+    company_name: string;
+    profile: {
+      current_position: string;
+      current_company: string;
+      total_experience_years: number | null;
+      primary_skills: string[];
+      salary_expectation: string;
+      notice_period: string;
+      preferred_role: string;
+      is_profile_complete: boolean;
+    };
+  };
 };
 
 export type AuthState = {
@@ -400,6 +712,23 @@ export function choosePersonalCoachSubtopic(
   );
 }
 
+export function choosePersonalCoachLesson(
+  baseUrl: string,
+  auth: AuthState,
+  sessionId: number,
+  lesson: string,
+) {
+  return requestWithAuth<ChooseCoachLessonResponse>(
+    baseUrl,
+    `/api/interview/coach/${sessionId}/choose-lesson/`,
+    {
+      method: "POST",
+      body: JSON.stringify({ lesson }),
+    },
+    auth,
+  );
+}
+
 export function answerPersonalCoachQuestion(
   baseUrl: string,
   auth: AuthState,
@@ -452,6 +781,206 @@ export function getUserLearningProgress(baseUrl: string, auth: AuthState) {
     baseUrl,
     "/api/interview/progress/",
     { method: "GET" },
+    auth,
+  );
+}
+
+export function analyzeJobDescription(
+  baseUrl: string,
+  auth: AuthState,
+  payload: JobDescriptionAnalyzePayload,
+) {
+  const body: {
+    job_description: string;
+    recruiter_name?: string;
+    company_name?: string;
+    application_last_date?: string;
+  } = {
+    job_description: payload.jobDescription,
+  };
+
+  if (payload.recruiterName?.trim()) {
+    body.recruiter_name = payload.recruiterName.trim();
+  }
+  if (payload.companyName?.trim()) {
+    body.company_name = payload.companyName.trim();
+  }
+  if (payload.applicationLastDate?.trim()) {
+    body.application_last_date = payload.applicationLastDate.trim();
+  }
+
+  return requestWithAuth<JobDescriptionAnalysisResponse>(
+    baseUrl,
+    "/api/interview/job-analyzer/analyze/",
+    {
+      method: "POST",
+      body: JSON.stringify(body),
+    },
+    auth,
+  );
+}
+
+export function resumeJobDescriptionAnalysis(
+  baseUrl: string,
+  auth: AuthState,
+  analysisId: number,
+) {
+  return requestWithAuth<ResumeJobDescriptionAnalysisResponse>(
+    baseUrl,
+    `/api/interview/job-analyzer/${analysisId}/resume/`,
+    {
+      method: "GET",
+    },
+    auth,
+  );
+}
+
+export function createUserAspiration(
+  baseUrl: string,
+  auth: AuthState,
+  payload: CreateAspirationPayload,
+) {
+  return requestWithAuth<AspirationResponse>(
+    baseUrl,
+    "/api/interview/aspiration/create/",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        current_position: payload.currentPosition,
+        target_job: payload.targetJob,
+        timeline_months: payload.timelineMonths ?? 6,
+        current_skills: payload.currentSkills ?? [],
+        constraints: payload.constraints ?? "",
+        additional_context: payload.additionalContext ?? "",
+      }),
+    },
+    auth,
+  );
+}
+
+export function resumeUserAspiration(
+  baseUrl: string,
+  auth: AuthState,
+  aspirationId: number,
+) {
+  return requestWithAuth<AspirationResponse>(
+    baseUrl,
+    `/api/interview/aspiration/${aspirationId}/resume/`,
+    {
+      method: "GET",
+    },
+    auth,
+  );
+}
+
+export function generateAspirationChecklist(
+  baseUrl: string,
+  auth: AuthState,
+  aspirationId: number,
+  forceRegenerate = false,
+) {
+  return requestWithAuth<AspirationChecklist>(
+    baseUrl,
+    `/api/interview/aspiration/${aspirationId}/checklist/generate/`,
+    {
+      method: "POST",
+      body: JSON.stringify({ force_regenerate: forceRegenerate }),
+    },
+    auth,
+  );
+}
+
+export function toggleAspirationChecklistItem(
+  baseUrl: string,
+  auth: AuthState,
+  aspirationId: number,
+  itemId: string,
+  completed: boolean,
+) {
+  return requestWithAuth<AspirationChecklist>(
+    baseUrl,
+    `/api/interview/aspiration/${aspirationId}/checklist/toggle/`,
+    {
+      method: "POST",
+      body: JSON.stringify({ item_id: itemId, completed }),
+    },
+    auth,
+  );
+}
+
+export function getCandidateProfile(baseUrl: string, auth: AuthState) {
+  return requestWithAuth<CandidateProfile>(
+    baseUrl,
+    "/api/interview/profile/settings/",
+    { method: "GET" },
+    auth,
+  );
+}
+
+export function updateCandidateProfile(
+  baseUrl: string,
+  auth: AuthState,
+  payload: CandidateProfile,
+) {
+  return requestWithAuth<CandidateProfileUpdateResponse>(
+    baseUrl,
+    "/api/interview/profile/settings/",
+    {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    },
+    auth,
+  );
+}
+
+export function startHRVoiceInterview(
+  baseUrl: string,
+  auth: AuthState,
+  payload: StartHRVoiceInterviewPayload,
+) {
+  return requestWithAuth<StartHRVoiceInterviewResponse>(
+    baseUrl,
+    "/api/interview/hr-voice/start/",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        aspiration_id: payload.aspirationId,
+        jd_analysis_id: payload.jdAnalysisId,
+        question_count: payload.questionCount ?? 12,
+      }),
+    },
+    auth,
+  );
+}
+
+export function answerHRVoiceInterview(
+  baseUrl: string,
+  auth: AuthState,
+  sessionId: number,
+  answer: string,
+) {
+  return requestWithAuth<HRVoiceAnswerResponse>(
+    baseUrl,
+    `/api/interview/hr-voice/${sessionId}/answer/`,
+    {
+      method: "POST",
+      body: JSON.stringify({ answer }),
+    },
+    auth,
+  );
+}
+
+export function resumeHRVoiceInterview(
+  baseUrl: string,
+  auth: AuthState,
+  sessionId: number,
+) {
+  return requestWithAuth<HRVoiceResumeResponse>(
+    baseUrl,
+    `/api/interview/hr-voice/${sessionId}/resume/`,
+    {
+      method: "GET",
+    },
     auth,
   );
 }
