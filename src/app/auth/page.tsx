@@ -124,7 +124,7 @@ export default function AuthPage() {
     <main className="shell route-shell">
       <section className="route-hero">
         <div>
-          <p className="eyebrow">Authentication Routes</p>
+          <p className="eyebrow">Login Page</p>
           <h1>Register and log in on a dedicated route.</h1>
           <p className="hero-copy">
             This page owns candidate onboarding and token management. Once authenticated, the
@@ -139,7 +139,7 @@ export default function AuthPage() {
             Refresh token
           </button>
           <Link className="secondary-button link-button" href="/interview">
-            Go to interview route
+            Interview page
           </Link>
         </div>
       </section>

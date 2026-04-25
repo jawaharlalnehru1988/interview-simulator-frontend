@@ -14,10 +14,10 @@ export default function Home() {
         </div>
         <div className="hero-links">
           <Link className="primary-button link-button" href="/auth">
-            Open auth route
+            Open Login Page
           </Link>
           <Link className="secondary-button link-button" href="/interview">
-            Open interview route
+            Interview page
           </Link>
           <Link className="ghost-button link-button" href="/personal-coach">
             Open personal coach
@@ -41,7 +41,7 @@ export default function Home() {
         <article className="card stack-card">
           <div className="card-heading">
             <p className="eyebrow">Route Structure</p>
-            <h2>Auth route</h2>
+            <h2>Login Page</h2>
           </div>
           <p className="muted-copy">
             Register users, issue JWT tokens, refresh tokens manually, and configure the backend API
@@ -55,7 +55,7 @@ export default function Home() {
         <article className="card stack-card">
           <div className="card-heading">
             <p className="eyebrow">Protected Workspace</p>
-            <h2>Interview route</h2>
+            <h2>Interview page</h2>
           </div>
           <p className="muted-copy">
             Start interviews, fetch questions, submit answers, and inspect summary reports from a

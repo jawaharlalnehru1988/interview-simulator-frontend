@@ -74,25 +74,70 @@ html[data-theme="dark"] .top-navbar {
 	justify-content: space-between;
 	width: min(1320px, calc(100% - 32px));
 	margin: 0 auto;
-	padding: 14px 0;
+	padding: 10px 0;
 }
 
 .header-right {
+	position: relative;
 	display: flex;
 	align-items: center;
-	flex-wrap: wrap;
-	gap: 12px;
+	gap: 8px;
 }
 
 .brand-mark {
 	font-family: var(--font-display), serif;
-	font-size: 1.8rem;
+	font-size: 1.05rem;
 	letter-spacing: -0.03em;
 }
 
+.menu-toggle {
+	display: inline-flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: 4px;
+	width: 36px;
+	height: 36px;
+	padding: 0;
+	border-radius: 10px;
+	background: rgba(255, 250, 243, 0.72);
+	border: 1px solid rgba(58, 42, 33, 0.12);
+	color: var(--ink);
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.menu-line {
+	display: block;
+	width: 16px;
+	height: 2px;
+	margin: 0 auto;
+	background: currentColor;
+	border-radius: 2px;
+}
+
+.menu-toggle:hover {
+	background: rgba(255, 250, 243, 0.95);
+	border-color: rgba(180, 79, 43, 0.3);
+}
+
 .site-nav {
+	display: none;
+	position: absolute;
+	top: calc(100% + 8px);
+	right: 0;
+	min-width: 210px;
+	padding: 8px;
+	gap: 6px;
+	flex-direction: column;
+	border-radius: 14px;
+	background: rgba(255, 250, 243, 0.98);
+	border: 1px solid rgba(58, 42, 33, 0.12);
+	box-shadow: 0 12px 24px rgba(67, 39, 23, 0.14);
+	z-index: 20;
+}
+
+.site-nav.open {
 	display: flex;
-	gap: 10px;
 }
 
 .nav-link,
@@ -103,11 +148,13 @@ html[data-theme="dark"] .top-navbar {
 }
 
 .nav-link {
-	padding: 10px 14px;
+	padding: 7px 10px;
 	border-radius: 999px;
 	background: rgba(255, 250, 243, 0.68);
 	border: 1px solid rgba(58, 42, 33, 0.12);
 	transition: all 0.2s ease;
+	font-size: 0.86rem;
+	line-height: 1.2;
 }
 
 .nav-link.active {
@@ -128,6 +175,23 @@ html[data-theme="dark"] .nav-link {
 	color: var(--ink);
 }
 
+html[data-theme="dark"] .menu-toggle {
+	background: rgba(60, 60, 60, 0.68);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	color: var(--ink);
+}
+
+html[data-theme="dark"] .menu-toggle:hover {
+	background: rgba(60, 60, 60, 0.95);
+	border-color: rgba(255, 107, 53, 0.3);
+}
+
+html[data-theme="dark"] .site-nav {
+	background: rgba(28, 28, 28, 0.98);
+	border: 1px solid rgba(255, 255, 255, 0.12);
+	box-shadow: 0 12px 24px rgba(0, 0, 0, 0.35);
+}
+
 html[data-theme="dark"] .nav-link.active {
 	background: #ff6b35;
 	color: #fff;
@@ -144,8 +208,8 @@ html[data-theme="dark"] .nav-link:hover:not(.active) {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	width: 40px;
-	height: 40px;
+	width: 34px;
+	height: 34px;
 	padding: 0;
 	border-radius: 999px;
 	background: rgba(255, 250, 243, 0.68);
@@ -166,8 +230,8 @@ html[data-theme="dark"] .nav-link:hover:not(.active) {
 }
 
 .theme-icon {
-	width: 20px;
-	height: 20px;
+	width: 16px;
+	height: 16px;
 }
 
 html[data-theme="dark"] .theme-toggle {
@@ -184,8 +248,8 @@ html[data-theme="dark"] .theme-toggle:hover {
 .user-menu-trigger {
 	display: flex;
 	align-items: center;
-	gap: 12px;
-	padding: 6px 14px;
+	gap: 8px;
+	padding: 4px 10px;
 	border-radius: 999px;
 	border: 1px solid rgba(58, 42, 33, 0.12);
 	background: rgba(255, 250, 243, 0.72);
@@ -201,13 +265,13 @@ html[data-theme="dark"] .theme-toggle:hover {
 .user-avatar {
 	display: grid;
 	place-items: center;
-	width: 32px;
-	height: 32px;
+	width: 26px;
+	height: 26px;
 	border-radius: 999px;
 	background: linear-gradient(135deg, #b44f2b, #efc58d);
 	color: #fff;
 	font-weight: 700;
-	font-size: 0.88rem;
+	font-size: 0.75rem;
 	text-transform: uppercase;
 }
 
@@ -216,7 +280,7 @@ html[data-theme="dark"] .theme-toggle:hover {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font-size: 0.9rem;
+	font-size: 0.8rem;
 	font-weight: 600;
 	color: var(--ink);
 }
@@ -1242,15 +1306,15 @@ html[data-theme="dark"] .theme-toggle:hover {
 	}
 
 	.site-header {
-		flex-direction: column;
-		align-items: flex-start;
+		flex-direction: row;
+		align-items: center;
 		width: min(100% - 20px, 1320px);
-		gap: 12px;
+		gap: 8px;
 	}
 
 	.header-right {
-		width: 100%;
-		justify-content: space-between;
+		width: auto;
+		justify-content: flex-end;
 	}
 
 	.user-name {
