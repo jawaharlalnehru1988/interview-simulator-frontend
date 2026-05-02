@@ -1,20 +1,33 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useSession } from "@/lib/useSession";
 import HeaderUserBadge from "./HeaderUserBadge";
 import { useTheme } from "@/lib/useTheme";
 
 export default function TopNavbar() {
-  const { isLoggedIn } = useSession();
+  const { isLoggedIn, logout } = useSession();
   const pathname = usePathname();
+  const router = useRouter();
   const { theme, toggleTheme } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
+  const isAuthPage = pathname === "/auth";
+  const authMode =
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("mode") === "register"
+      ? "register"
+      : "login";
 
   function handleNavClick() {
     setMenuOpen(false);
+  }
+
+  function handleLogout() {
+    logout();
+    setMenuOpen(false);
+    router.push("/auth?mode=login");
   }
 
   return (
@@ -37,14 +50,37 @@ export default function TopNavbar() {
           </button>
 
           <nav className={`site-nav ${menuOpen ? "open" : ""}`} aria-label="Primary">
-            {!isLoggedIn && (
+            {!isLoggedIn && !isAuthPage && (
               <Link
                 className={`nav-link ${pathname === "/auth" ? "active" : ""}`}
-                href="/auth"
+                href="/auth?mode=login"
                 onClick={handleNavClick}
               >
                 Login
               </Link>
+            )}
+            {!isLoggedIn && isAuthPage && (
+              <>
+                <Link
+                  className={`nav-link ${authMode === "login" ? "active" : ""}`}
+                  href="/auth?mode=login"
+                  onClick={handleNavClick}
+                >
+                  Login
+                </Link>
+                <Link
+                  className={`nav-link ${authMode === "register" ? "active" : ""}`}
+                  href="/auth?mode=register"
+                  onClick={handleNavClick}
+                >
+                  Register
+                </Link>
+              </>
+            )}
+            {isLoggedIn && (
+              <button className="nav-link nav-action" onClick={handleLogout} type="button">
+                Logout
+              </button>
             )}
             <Link
               className={`nav-link ${pathname === "/interview" ? "active" : ""}`}

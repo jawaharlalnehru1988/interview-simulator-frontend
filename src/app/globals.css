@@ -169,6 +169,10 @@ html[data-theme="dark"] .top-navbar {
 	border-color: rgba(180, 79, 43, 0.3);
 }
 
+.nav-action {
+	cursor: pointer;
+}
+
 html[data-theme="dark"] .nav-link {
 	background: rgba(60, 60, 60, 0.68);
 	border: 1px solid rgba(255, 255, 255, 0.08);
@@ -499,6 +503,15 @@ html[data-theme="dark"] .theme-toggle:hover {
 
 .route-shell {
 	padding-top: 18px;
+}
+
+.auth-grid-center {
+	display: flex;
+	justify-content: center;
+}
+
+.auth-card {
+	width: min(520px, 100%);
 }
 
 .route-hero {

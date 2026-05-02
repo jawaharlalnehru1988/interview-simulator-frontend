@@ -8,12 +8,14 @@ import remarkGfm from "remark-gfm";
 import {
   ApiError,
   checkHealth,
+  getInterviewHistory,
   getInterviewSummary,
   getNextQuestion,
   startInterview,
   submitAnswer,
   type AuthState,
   type EvaluationResult,
+  type InterviewHistoryItem,
   type InterviewSummaryResponse,
   type NextQuestionResponse,
 } from "@/lib/api";
@@ -51,6 +53,7 @@ export default function InterviewPage() {
   const [selectedMcqOption, setSelectedMcqOption] = useState("");
   const [lastEvaluation, setLastEvaluation] = useState<EvaluationResult | null>(null);
   const [summary, setSummary] = useState<InterviewSummaryResponse | null>(null);
+  const [history, setHistory] = useState<InterviewHistoryItem[]>([]);
   const [showSuggestedAnswer, setShowSuggestedAnswer] = useState(false);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [busyLabel, setBusyLabel] = useState("");
@@ -100,6 +103,34 @@ export default function InterviewPage() {
       setErrorMessage("Session expired. Log in again from the auth route.");
     },
   };
+
+  async function loadInterviewHistory() {
+    if (!session.accessToken) {
+      return;
+    }
+
+    try {
+      const response = await getInterviewHistory(session.apiBaseUrl, authState);
+      setHistory(response.interviews);
+
+      if (response.interviews.length > 0) {
+        const latest = response.interviews[0];
+        setSummary(latest);
+
+        if (!session.interviewId) {
+          updateSession({ interviewId: latest.interview_id });
+        }
+      }
+    } catch (error) {
+      const message =
+        error instanceof ApiError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : "Unexpected error";
+      setErrorMessage(message);
+    }
+  }
 
   async function runAction(label: string, action: () => Promise<void>) {
     setBusyLabel(label);
@@ -170,6 +201,8 @@ export default function InterviewPage() {
         "First Question",
         `Loaded question ${questionResponse.question_number} at ${questionResponse.difficulty} difficulty.`,
       );
+
+      await loadInterviewHistory();
     });
   }
 
@@ -189,6 +222,8 @@ export default function InterviewPage() {
         "Next Question",
         `Loaded question ${response.question_number} at ${response.difficulty} difficulty.`,
       );
+
+      await loadInterviewHistory();
     });
   }
 
@@ -218,6 +253,8 @@ export default function InterviewPage() {
           ? `Scored ${response.evaluation.score}/100.`
           : `Answer accepted with ${response.evaluation_status} status.`,
       );
+
+      await loadInterviewHistory();
     });
   }
 
@@ -253,9 +290,18 @@ export default function InterviewPage() {
     setAnswerText("");
     setLastEvaluation(null);
     setSummary(null);
+    setHistory([]);
     setActivity([]);
     setErrorMessage("");
   }
+
+  useEffect(() => {
+    if (!ready || !session.accessToken) {
+      return;
+    }
+
+    loadInterviewHistory();
+  }, [ready, session.accessToken]);
 
   function extractCleanedQuestion(question: string, hasOptions: boolean): string {
     let cleaned = question.trim();
@@ -503,9 +549,37 @@ export default function InterviewPage() {
         <article className="card stack-card tall-card">
           <div className="card-heading">
             <p className="eyebrow">Interview Summary</p>
-            <h2>Protected summary route</h2>
+            <h2>Attempted interviews</h2>
           </div>
-          {summary ? (
+          {history.length > 0 ? (
+            <div className="summary-list">
+              {history.map((interview) => (
+                <div className="summary-item" key={interview.interview_id}>
+                  <div className="summary-item-head">
+                    <strong>{interview.topic}</strong>
+                    <span>{interview.round}</span>
+                    <span>{interview.status}</span>
+                  </div>
+                  <small>
+                    Asked: {interview.questions_asked} · Avg: {interview.average_score ?? "--"}
+                  </small>
+                  <div className="summary-list">
+                    {interview.questions.map((item) => (
+                      <div className="summary-item" key={item.question_id}>
+                        <div className="summary-item-head">
+                          <strong>Q{item.order + 1}</strong>
+                          <span>{item.difficulty}</span>
+                          <span>{item.score ?? "pending"}</span>
+                        </div>
+                        <p>{item.question}</p>
+                        <small>{item.answer || "No answer submitted yet."}</small>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : summary ? (
             <>
               <div className="metric-grid">
                 <div>
@@ -540,7 +614,7 @@ export default function InterviewPage() {
               </div>
             </>
           ) : (
-            <p className="muted-copy">Load summary after answering at least one question.</p>
+            <p className="muted-copy">Start interview and answer questions to build your history.</p>
           )}
         </article>
 

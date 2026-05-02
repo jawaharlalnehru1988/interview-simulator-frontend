@@ -86,6 +86,15 @@ export type InterviewSummaryResponse = {
   questions: InterviewSummaryQuestion[];
 };
 
+export type InterviewHistoryItem = InterviewSummaryResponse & {
+  updated_at: string;
+};
+
+export type InterviewHistoryResponse = {
+  count: number;
+  interviews: InterviewHistoryItem[];
+};
+
 export type StartCoachResponse = {
   session_id: number;
   topic: string;
@@ -678,6 +687,15 @@ export function getInterviewSummary(baseUrl: string, auth: AuthState, interviewI
   return requestWithAuth<InterviewSummaryResponse>(
     baseUrl,
     `/api/interview/${interviewId}/summary/`,
+    { method: "GET" },
+    auth,
+  );
+}
+
+export function getInterviewHistory(baseUrl: string, auth: AuthState) {
+  return requestWithAuth<InterviewHistoryResponse>(
+    baseUrl,
+    "/api/interview/history/",
     { method: "GET" },
     auth,
   );

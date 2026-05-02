@@ -1,16 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 
-import {
-  ApiError,
-  checkHealth,
-  loginUser,
-  refreshUserToken,
-  registerUser,
-} from "@/lib/api";
+import { ApiError, loginUser, registerUser } from "@/lib/api";
 import {
   createDefaultSession,
   loadClientSession,
@@ -27,11 +20,15 @@ export default function AuthPage() {
     createDefaultSession(DEFAULT_API_BASE_URL),
   );
   const [password, setPassword] = useState("");
-  const [healthState, setHealthState] = useState("unknown");
   const [busyLabel, setBusyLabel] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [ready, setReady] = useState(false);
+  const authMode: "login" | "register" =
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("mode") === "register"
+      ? "register"
+      : "login";
 
   useEffect(() => {
     setSession(loadClientSession(DEFAULT_API_BASE_URL));
@@ -69,14 +66,6 @@ export default function AuthPage() {
     }
   }
 
-  async function handleHealthCheck() {
-    await runAction("Health Check", async () => {
-      const response = await checkHealth(session.apiBaseUrl);
-      setHealthState(response.status);
-      setSuccessMessage(`Backend responded with ${response.status}.`);
-    });
-  }
-
   async function handleRegister(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -107,87 +96,33 @@ export default function AuthPage() {
     });
   }
 
-  async function handleRefreshToken() {
-    if (!session.refreshToken || !session.accessToken) {
-      setErrorMessage("Log in first before refreshing tokens.");
-      return;
-    }
-
-    await runAction("Refresh Token", async () => {
-      const response = await refreshUserToken(session.apiBaseUrl, session.refreshToken);
-      updateSession({ accessToken: response.access });
-      setSuccessMessage("Access token refreshed.");
-    });
-  }
-
   return (
-    <main className="shell route-shell">
+    <main className="shell route-shell auth-page">
       <section className="route-hero">
         <div>
           <p className="eyebrow">Login Page</p>
-          <h1>Register and log in on a dedicated route.</h1>
+          <h1>{authMode === "login" ? "Log in to continue" : "Create your account"}</h1>
           <p className="hero-copy">
-            This page owns candidate onboarding and token management. Once authenticated, the
-            interview workspace takes over the rest of the product flow.
+            {authMode === "login"
+              ? "Use your account credentials to enter the interview workspace."
+              : "Create an account first, then switch to login to access the interview workspace."}
           </p>
-        </div>
-        <div className="hero-links">
-          <button className="ghost-button" onClick={handleHealthCheck} type="button">
-            Check backend health
-          </button>
-          <button className="ghost-button" onClick={handleRefreshToken} type="button">
-            Refresh token
-          </button>
-          <Link className="secondary-button link-button" href="/interview">
-            Interview page
-          </Link>
-        </div>
-      </section>
-
-      <section className="status-strip">
-        <div className="status-pill">
-          <span>Backend</span>
-          <strong>{healthState}</strong>
-        </div>
-        <div className="status-pill">
-          <span>Busy</span>
-          <strong>{busyLabel || "idle"}</strong>
-        </div>
-        <div className="status-pill accent">
-          <span>Session</span>
-          <strong>{session.accessToken ? "authenticated" : "guest"}</strong>
         </div>
       </section>
 
       {errorMessage ? <p className="banner error">{errorMessage}</p> : null}
       {successMessage ? <p className="banner success">{successMessage}</p> : null}
 
-      <section className="route-grid">
-        <article className="card stack-card">
+      <section className="route-grid auth-grid-center">
+        <article className="card stack-card auth-card">
           <div className="card-heading">
-            <p className="eyebrow">Connection</p>
-            <h2>API target</h2>
+            <p className="eyebrow">{authMode === "login" ? "Login" : "Register"}</p>
+            <h2>{authMode === "login" ? "Issue JWT tokens" : "Create account"}</h2>
           </div>
-          <label className="field">
-            <span>API base URL</span>
-            <input
-              value={session.apiBaseUrl}
-              onChange={(event) => updateSession({ apiBaseUrl: event.target.value })}
-              placeholder="http://127.0.0.1:8000"
-            />
-          </label>
-          <p className="muted-copy">
-            The frontend stores this locally, so you can point at local, staging, or production
-            Django instances without rebuilding the app.
-          </p>
-        </article>
-
-        <article className="card stack-card">
-          <div className="card-heading">
-            <p className="eyebrow">Register</p>
-            <h2>Create account</h2>
-          </div>
-          <form className="stack-card" onSubmit={handleRegister}>
+          <form
+            className="stack-card"
+            onSubmit={authMode === "login" ? handleLogin : handleRegister}
+          >
             <label className="field">
               <span>Username</span>
               <input
@@ -196,14 +131,17 @@ export default function AuthPage() {
                 onChange={(event) => updateSession({ username: event.target.value })}
               />
             </label>
-            <label className="field">
-              <span>Email</span>
-              <input
-                type="email"
-                value={session.email}
-                onChange={(event) => updateSession({ email: event.target.value })}
-              />
-            </label>
+            {authMode === "register" ? (
+              <label className="field">
+                <span>Email</span>
+                <input
+                  type="email"
+                  required
+                  value={session.email}
+                  onChange={(event) => updateSession({ email: event.target.value })}
+                />
+              </label>
+            ) : null}
             <label className="field">
               <span>Password</span>
               <input
@@ -214,42 +152,9 @@ export default function AuthPage() {
               />
             </label>
             <button className="primary-button" disabled={Boolean(busyLabel)} type="submit">
-              Register user
+              {authMode === "login" ? "Log in" : "Register user"}
             </button>
           </form>
-        </article>
-
-        <article className="card stack-card">
-          <div className="card-heading">
-            <p className="eyebrow">Login</p>
-            <h2>Issue JWT tokens</h2>
-          </div>
-          <form className="stack-card" onSubmit={handleLogin}>
-            <label className="field">
-              <span>Username</span>
-              <input
-                required
-                value={session.username}
-                onChange={(event) => updateSession({ username: event.target.value })}
-              />
-            </label>
-            <label className="field">
-              <span>Password</span>
-              <input
-                required
-                type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-              />
-            </label>
-            <button className="primary-button" disabled={Boolean(busyLabel)} type="submit">
-              Log in
-            </button>
-          </form>
-          <div className="token-box">
-            <span>Access token</span>
-            <code>{session.accessToken ? `${session.accessToken.slice(0, 32)}...` : "not issued yet"}</code>
-          </div>
         </article>
       </section>
     </main>
