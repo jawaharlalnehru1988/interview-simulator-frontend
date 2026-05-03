@@ -7,6 +7,7 @@ export type ClientSession = {
   interviewId: number | null;
   topic: string;
   roundType: string;
+  startedAt?: number;
 };
 
 const STORAGE_KEY = "interview-simulater.session";
@@ -37,7 +38,7 @@ export function createDefaultSession(defaultApiBaseUrl: string): ClientSession {
     accessToken: "",
     refreshToken: "",
     interviewId: null,
-    topic: "System Design",
+    topic: "Java 8",
     roundType: "technical",
   };
 }

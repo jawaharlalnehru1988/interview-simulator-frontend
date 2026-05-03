@@ -43,6 +43,23 @@ function timestamp() {
   });
 }
 
+const PREDEFINED_TOPICS = [
+  "Java 8",
+  "DSA",
+  "Javascript",
+  "Angular",
+  "Springboot",
+  "Microservices(Java)",
+  "React",
+  "NextJS",
+  "Devops",
+  "API design",
+  "Agentic AI",
+  "Frontend SystemDesign",
+  "backend SystemDesign",
+  "backend security",
+];
+
 export default function InterviewPage() {
   const [session, setSession] = useState<ClientSession>(() =>
     createDefaultSession(DEFAULT_API_BASE_URL),
@@ -59,6 +76,28 @@ export default function InterviewPage() {
   const [busyLabel, setBusyLabel] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [ready, setReady] = useState(false);
+  const [timeLeft, setTimeLeft] = useState<string>("");
+
+  useEffect(() => {
+    if (!session.startedAt || !session.interviewId) {
+      setTimeLeft("");
+      return;
+    }
+
+    const updateTimer = () => {
+      const elapsed = Date.now() - session.startedAt!;
+      const totalMs = 60 * 60 * 1000;
+      const remaining = Math.max(0, totalMs - elapsed);
+      
+      const m = Math.floor(remaining / 60000);
+      const s = Math.floor((remaining % 60000) / 1000);
+      setTimeLeft(`${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`);
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [session.startedAt, session.interviewId]);
 
   useEffect(() => {
     setSession(loadClientSession(DEFAULT_API_BASE_URL));
@@ -118,7 +157,10 @@ export default function InterviewPage() {
         setSummary(latest);
 
         if (!session.interviewId) {
-          updateSession({ interviewId: latest.interview_id });
+          const id = latest.interview_id || (latest as any).id;
+          if (id) {
+            updateSession({ interviewId: id });
+          }
         }
       }
     } catch (error) {
@@ -176,7 +218,7 @@ export default function InterviewPage() {
       });
 
       const newInterviewId = response.interview_id;
-      updateSession({ interviewId: newInterviewId });
+      updateSession({ interviewId: newInterviewId, startedAt: Date.now() });
       setCurrentQuestion(null);
       setAnswerText("");
       setSelectedMcqOption("");
@@ -253,6 +295,19 @@ export default function InterviewPage() {
           ? `Scored ${response.evaluation.score}/100.`
           : `Answer accepted with ${response.evaluation_status} status.`,
       );
+      // Fetch next question automatically to simulate continuous flow
+      try {
+        const nextQResponse = await getNextQuestion(session.apiBaseUrl, authState, session.interviewId!);
+        setCurrentQuestion(nextQResponse);
+        setAnswerText("");
+        setSelectedMcqOption("");
+        pushActivity(
+          "Next Question",
+          `Loaded question ${nextQResponse.question_number} automatically.`
+        );
+      } catch (err) {
+        // If the interview is completed, it might throw an error or handle it.
+      }
 
       await loadInterviewHistory();
     });
@@ -368,12 +423,35 @@ export default function InterviewPage() {
           <form className="stack-card" onSubmit={handleStartInterview}>
             <label className="field">
               <span>Topic</span>
-              <input
-                value={session.topic}
-                onChange={(event) => updateSession({ topic: event.target.value })}
-                required
-              />
+              <select
+                value={PREDEFINED_TOPICS.includes(session.topic) ? session.topic : "custom"}
+                onChange={(event) => {
+                  if (event.target.value === "custom") {
+                    updateSession({ topic: "" });
+                  } else {
+                    updateSession({ topic: event.target.value });
+                  }
+                }}
+              >
+                {PREDEFINED_TOPICS.map((topic) => (
+                  <option key={topic} value={topic}>
+                    {topic}
+                  </option>
+                ))}
+                <option value="custom">Other (Type your own)</option>
+              </select>
             </label>
+            {!PREDEFINED_TOPICS.includes(session.topic) && (
+              <label className="field">
+                <span>Custom Topic</span>
+                <input
+                  value={session.topic}
+                  onChange={(event) => updateSession({ topic: event.target.value })}
+                  placeholder="Enter a custom topic"
+                  required
+                />
+              </label>
+            )}
             <label className="field">
               <span>Round type</span>
               <select
@@ -398,22 +476,6 @@ export default function InterviewPage() {
           </div>
           <div className="button-row">
             <button
-              className="primary-button"
-              disabled={!session.interviewId || Boolean(busyLabel)}
-              onClick={handleNextQuestion}
-              type="button"
-            >
-              Fetch next question
-            </button>
-            <button
-              className="secondary-button"
-              disabled={!session.interviewId || Boolean(busyLabel)}
-              onClick={handleSummary}
-              type="button"
-            >
-              Load summary
-            </button>
-            <button
               className="ghost-button"
               disabled={!currentQuestion || Boolean(busyLabel)}
               onClick={() => setShowSuggestedAnswer((current) => !current)}
@@ -428,6 +490,12 @@ export default function InterviewPage() {
               <strong>{currentQuestion?.question_number ?? "--"}</strong>
               <span>Difficulty</span>
               <strong>{currentQuestion?.difficulty ?? "--"}</strong>
+              {timeLeft && (
+                <>
+                  <span>Time Left</span>
+                  <strong style={{ color: "var(--accent)" }}>{timeLeft}</strong>
+                </>
+              )}
             </div>
             <p className="question-text">
               {extractCleanedQuestion(
@@ -474,31 +542,39 @@ export default function InterviewPage() {
           ) : null}
 
           <form className="stack-card" onSubmit={handleSubmitAnswer}>
-            <label className="field">
-              <span>Your answer</span>
-              <textarea
-                rows={6}
-                value={answerText}
-                onChange={(event) => {
-                  setAnswerText(event.target.value);
-                  if (selectedMcqOption) {
-                    setSelectedMcqOption("");
-                  }
-                }}
-                placeholder={
-                  session.roundType === "mcq"
-                    ? "Select an option above or type your answer here."
-                    : "Describe your design, tradeoffs, and production strategy."
-                }
-              />
-            </label>
-            <button
-              className="primary-button"
-              disabled={!currentQuestion || !answerText.trim() || Boolean(busyLabel)}
-              type="submit"
-            >
-              Submit answer
-            </button>
+            {session.roundType !== "mcq" && (
+              <label className="field">
+                <span>Your answer</span>
+                <textarea
+                  rows={6}
+                  value={answerText}
+                  onChange={(event) => {
+                    setAnswerText(event.target.value);
+                    if (selectedMcqOption) {
+                      setSelectedMcqOption("");
+                    }
+                  }}
+                  placeholder="Describe your design, tradeoffs, and production strategy."
+                />
+              </label>
+            )}
+            <div className="button-row">
+              <button
+                className="primary-button"
+                disabled={!currentQuestion || !answerText.trim() || Boolean(busyLabel)}
+                type="submit"
+              >
+                Submit answer
+              </button>
+              <button
+                className="secondary-button"
+                disabled={!session.interviewId || Boolean(busyLabel)}
+                onClick={handleNextQuestion}
+                type="button"
+              >
+                Fetch next question
+              </button>
+            </div>
           </form>
         </article>
 
@@ -509,34 +585,62 @@ export default function InterviewPage() {
           </div>
           {lastEvaluation ? (
             <>
-              <div className="score-orb">
-                <span>Score</span>
-                <strong>{lastEvaluation.score}</strong>
+              <div style={{ display: "flex", gap: "16px", marginBottom: "16px" }}>
+                <div className="score-orb" style={{ flex: 1, padding: "16px", textAlign: "center" }}>
+                  <span>Current Answer Score</span>
+                  <strong>{lastEvaluation.score} / {session.roundType === 'mcq' ? 1 : session.roundType === 'coding' ? 20 : 10}</strong>
+                </div>
+                {summary && (summary.interview_id === session.interviewId || (summary as any).id === session.interviewId) && (() => {
+                  const evaluatedQs = summary.questions.filter((q: any) => q.score != null);
+                  const totalScore = evaluatedQs.reduce((acc: number, q: any) => acc + q.score, 0);
+                  const maxPerQuestion = session.roundType === 'mcq' ? 1 : session.roundType === 'coding' ? 20 : 10;
+                  const maxScore = evaluatedQs.length * maxPerQuestion;
+                  if (maxScore === 0) return null;
+                  return (
+                    <div className="score-orb" style={{ flex: 1, padding: "16px", textAlign: "center", background: "linear-gradient(135deg, rgba(239,197,141,0.2), rgba(180,79,43,0.1))" }}>
+                      <span>Cumulative Score</span>
+                      <strong>{totalScore} / {maxScore}</strong>
+                    </div>
+                  );
+                })()}
               </div>
-              <div className="list-block">
-                <h3>Strengths</h3>
-                <ul>
-                  {lastEvaluation.strengths.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-              <div className="list-block">
-                <h3>Weaknesses</h3>
-                <ul>
-                  {lastEvaluation.weaknesses.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-              <div className="list-block">
-                <h3>Improvements</h3>
-                <ul>
-                  {lastEvaluation.improvements.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </div>
+              {session.roundType === "mcq" ? (
+                <div className="list-block">
+                  <h3>Explanation</h3>
+                  <ul>
+                    {lastEvaluation.strengths.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : (
+                <>
+                  <div className="list-block">
+                    <h3>Strengths</h3>
+                    <ul>
+                      {lastEvaluation.strengths.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="list-block">
+                    <h3>Weaknesses</h3>
+                    <ul>
+                      {lastEvaluation.weaknesses.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="list-block">
+                    <h3>Improvements</h3>
+                    <ul>
+                      {lastEvaluation.improvements.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </>
+              )}
             </>
           ) : (
             <p className="muted-copy">
@@ -553,25 +657,27 @@ export default function InterviewPage() {
           </div>
           {history.length > 0 ? (
             <div className="summary-list">
-              {history.map((interview) => (
-                <div className="summary-item" key={interview.interview_id}>
+              {history.map((interview, index) => (
+                <div className="summary-item" key={interview.interview_id || (interview as any).id || index}>
                   <div className="summary-item-head">
                     <strong>{interview.topic}</strong>
-                    <span>{interview.round}</span>
+                    <span>{interview.round || (interview as any).roundType}</span>
                     <span>{interview.status}</span>
                   </div>
                   <small>
-                    Asked: {interview.questions_asked} · Avg: {interview.average_score ?? "--"}
+                    Asked: {interview.questions_asked ?? (interview as any).questions?.length} · Avg: {interview.average_score ?? "--"}
                   </small>
                   <div className="summary-list">
-                    {interview.questions.map((item) => (
-                      <div className="summary-item" key={item.question_id}>
+                    {(interview.questions || (interview as any).questions || [])
+                      .filter((q: any) => q.answer || q.score !== null)
+                      .map((item: any, qIndex: number) => (
+                      <div className="summary-item" key={item.question_id || item.id || qIndex}>
                         <div className="summary-item-head">
-                          <strong>Q{item.order + 1}</strong>
+                          <strong>Q{(item.order ?? item.sort_order ?? qIndex) + 1}</strong>
                           <span>{item.difficulty}</span>
                           <span>{item.score ?? "pending"}</span>
                         </div>
-                        <p>{item.question}</p>
+                        <p>{item.question || item.text}</p>
                         <small>{item.answer || "No answer submitted yet."}</small>
                       </div>
                     ))}
@@ -600,14 +706,16 @@ export default function InterviewPage() {
                 </div>
               </div>
               <div className="summary-list">
-                {summary.questions.map((item) => (
-                  <div className="summary-item" key={item.question_id}>
+                {(summary.questions || [])
+                  .filter((q: any) => q.answer || q.score !== null)
+                  .map((item: any, qIndex: number) => (
+                  <div className="summary-item" key={item.question_id || item.id || qIndex}>
                     <div className="summary-item-head">
-                      <strong>Q{item.order + 1}</strong>
+                      <strong>Q{(item.order ?? item.sort_order ?? qIndex) + 1}</strong>
                       <span>{item.difficulty}</span>
                       <span>{item.score ?? "pending"}</span>
                     </div>
-                    <p>{item.question}</p>
+                    <p>{item.question || item.text}</p>
                     <small>{item.answer || "No answer submitted yet."}</small>
                   </div>
                 ))}
