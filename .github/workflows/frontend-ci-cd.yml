@@ -1,0 +1,75 @@
+name: Interview Trainer Frontend CI/CD
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  # ─────────────────────────────────────────────────────────
+  # 1. Build check (lint + next build)
+  # ─────────────────────────────────────────────────────────
+  build:
+    name: Build (Node.js / Next.js)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_BASE_URL: https://interview-trainer.asknehru.com
+
+  # ─────────────────────────────────────────────────────────
+  # 2. Deploy to VPS  (master only)
+  # ─────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy to Production VPS
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: SSH – Pull, Build & Restart
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          script: |
+            set -e
+
+            FRONTEND_DIR=/var/www/interview-trainer/frontend
+
+            echo ">>> Pulling latest code"
+            cd "$FRONTEND_DIR"
+            git pull origin master
+
+            echo ">>> Installing dependencies"
+            npm ci --prefer-offline
+
+            echo ">>> Building Next.js"
+            npm run build
+
+            echo ">>> Restarting frontend service"
+            sudo systemctl restart interview-frontend.service
+
+            echo ">>> Verifying service"
+            sudo systemctl --no-pager --full status interview-frontend.service
+            echo "Frontend deployment successful"
