@@ -39,7 +39,7 @@ export function createDefaultSession(defaultApiBaseUrl: string): ClientSession {
     refreshToken: "",
     interviewId: null,
     topic: "Java 8",
-    roundType: "technical",
+    roundType: "basic",
   };
 }
 

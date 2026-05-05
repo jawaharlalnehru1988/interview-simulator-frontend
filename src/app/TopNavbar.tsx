@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSession } from "@/lib/useSession";
 import HeaderUserBadge from "./HeaderUserBadge";
 import { useTheme } from "@/lib/useTheme";
@@ -19,6 +19,31 @@ export default function TopNavbar() {
     new URLSearchParams(window.location.search).get("mode") === "register"
       ? "register"
       : "login";
+  const navRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (navRef.current && !navRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    if (menuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [menuOpen]);
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+      }
+    }
+    if (menuOpen) {
+      document.addEventListener("keydown", handleKeyDown);
+    }
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [menuOpen]);
 
   function handleNavClick() {
     setMenuOpen(false);
@@ -36,7 +61,7 @@ export default function TopNavbar() {
         <Link className="brand-mark" href="/">
           Interview Simulator
         </Link>
-        <div className="header-right">
+        <div className="header-right" ref={navRef}>
           <button
             className="menu-toggle"
             type="button"

@@ -215,6 +215,7 @@ export type UserLearningProgressResponse = {
     }>;
     personal_coach: Array<{
       session_id: number;
+      id?: number;
       topic: string;
       current_subtopic: string;
       stage: string;
@@ -701,8 +702,8 @@ export function getInterviewHistory(baseUrl: string, auth: AuthState) {
   );
 }
 
-export function startPersonalCoach(baseUrl: string, auth: AuthState, topic: string) {
-  return requestWithAuth<StartCoachResponse>(
+export async function startPersonalCoach(baseUrl: string, auth: AuthState, topic: string) {
+  const res = await requestWithAuth<any>(
     baseUrl,
     "/api/interview/coach/start/",
     {
@@ -711,6 +712,11 @@ export function startPersonalCoach(baseUrl: string, auth: AuthState, topic: stri
     },
     auth,
   );
+  return {
+    ...res,
+    session_id: res.id || res.session_id,
+    subtopics: typeof res.subtopics === "string" ? JSON.parse(res.subtopics || "[]") : (res.subtopics || []),
+  } as StartCoachResponse;
 }
 
 export function choosePersonalCoachSubtopic(
@@ -781,17 +787,23 @@ export function explainPersonalCoachQuery(
   );
 }
 
-export function resumePersonalCoachSession(
+export async function resumePersonalCoachSession(
   baseUrl: string,
   auth: AuthState,
   sessionId: number,
 ) {
-  return requestWithAuth<ResumeCoachResponse>(
+  const res = await requestWithAuth<any>(
     baseUrl,
     `/api/interview/coach/${sessionId}/resume/`,
     { method: "GET" },
     auth,
   );
+  return {
+    ...res,
+    session_id: res.id || res.session_id,
+    subtopics: typeof res.subtopics === "string" ? JSON.parse(res.subtopics || "[]") : (res.subtopics || []),
+    lessons: res.lessons || [],
+  } as ResumeCoachResponse;
 }
 
 export function getUserLearningProgress(baseUrl: string, auth: AuthState) {

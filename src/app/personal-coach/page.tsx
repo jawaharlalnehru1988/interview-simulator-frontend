@@ -26,6 +26,12 @@ import {
   type ClientSession,
 } from "@/lib/session";
 
+import { TopicInput } from "./components/TopicInput";
+import { SubtopicSelection } from "./components/SubtopicSelection";
+import { LearningLoop } from "./components/LearningLoop";
+import { CoachEvaluation } from "./components/CoachEvaluation";
+import { ProgressHistory } from "./components/ProgressHistory";
+
 const DEFAULT_API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
 
@@ -42,7 +48,24 @@ export default function PersonalCoachPage() {
   );
   const [ready, setReady] = useState(false);
 
-  const [topic, setTopic] = useState("System Design");
+  const PREDEFINED_TOPICS = [
+    "Java 8",
+    "DSA",
+    "Javascript",
+    "Angular",
+    "Springboot",
+    "Microservices(Java)",
+    "React",
+    "NextJS",
+    "Devops",
+    "API design",
+    "Agentic AI",
+    "Frontend SystemDesign",
+    "backend SystemDesign",
+    "backend security",
+  ];
+
+  const [topic, setTopic] = useState("Java 8");
   const [coachSessionId, setCoachSessionId] = useState<number | null>(null);
   const [subtopics, setSubtopics] = useState<string[]>([]);
   const [selectedSubtopic, setSelectedSubtopic] = useState("");
@@ -113,7 +136,7 @@ export default function PersonalCoachPage() {
       const score = topicSimilarityScore(topicInput, sessionItem.topic);
       if (score >= 0.55 && (!best || score > best.score)) {
         best = {
-          session_id: sessionItem.session_id,
+          session_id: sessionItem.session_id || sessionItem.id as number,
           topic: sessionItem.topic,
           score,
         };
@@ -593,406 +616,68 @@ export default function PersonalCoachPage() {
       {errorMessage ? <p className="banner error">{errorMessage}</p> : null}
 
       <section className="route-grid">
-        <article className="card stack-card">
-          <div className="card-heading">
-            <p className="eyebrow">1. Topic Input</p>
-            <h2>Start Coach Session</h2>
-          </div>
-          <form className="stack-card" onSubmit={handleStartCoach}>
-            <label className="field">
-              <span>Topic</span>
-              <input
-                value={topic}
-                onChange={(event) => setTopic(event.target.value)}
-                placeholder="Example: System Design"
-                required
-              />
-            </label>
-            <button className="primary-button" disabled={Boolean(busyLabel)} type="submit">
-              {busyLabel === "Start Coach" ? "Generating subtopics..." : "Generate subtopics"}
-            </button>
-          </form>
-        </article>
+        <TopicInput
+          topic={topic}
+          setTopic={setTopic}
+          busyLabel={busyLabel}
+          predefinedTopics={PREDEFINED_TOPICS}
+          handleStartCoach={handleStartCoach}
+        />
 
-        <article className="card stack-card tall-card">
-          <div className="card-heading">
-            <p className="eyebrow">2. Subtopic Choice</p>
-            <h2>Select What To Learn</h2>
-          </div>
-          <p className="muted-copy">{coachPrompt || "AI will suggest subtopics after you start."}</p>
+        <SubtopicSelection
+          coachPrompt={coachPrompt}
+          subtopics={subtopics}
+          selectedSubtopic={selectedSubtopic}
+          setSelectedSubtopic={setSelectedSubtopic}
+          practicedSubtopics={practicedSubtopics}
+          handleChooseSubtopic={handleChooseSubtopic}
+          busyLabel={busyLabel}
+          coachSessionId={coachSessionId}
+          lessons={lessons}
+          selectedLesson={selectedLesson}
+          setSelectedLesson={setSelectedLesson}
+          practicedLessonsMap={practicedLessonsMap}
+          handleChooseLesson={handleChooseLesson}
+          topicProgressPercent={topicProgressPercent}
+          topicProgressMeta={topicProgressMeta}
+          completedLessonsForCurrentSubtopic={completedLessonsForCurrentSubtopic}
+          suggestedNextSubtopic={suggestedNextSubtopic}
+          applySuggestedSubtopic={applySuggestedSubtopic}
+        />
 
-          <form className="stack-card" onSubmit={handleChooseSubtopic}>
-            <label className="field">
-              <span>Subtopic</span>
-              <select
-                value={selectedSubtopic}
-                onChange={(event) => setSelectedSubtopic(event.target.value)}
-                disabled={!subtopics.length || Boolean(busyLabel)}
-              >
-                <option value="">Choose a subtopic</option>
-                {subtopics.map((subtopic) => (
-                  <option key={subtopic} value={subtopic}>
-                    {practicedSubtopics.some((item) => item.toLowerCase() === subtopic.toLowerCase())
-                      ? `${subtopic} (Practiced)`
-                      : subtopic}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button
-              className="secondary-button"
-              type="submit"
-              disabled={!coachSessionId || !selectedSubtopic || Boolean(busyLabel)}
-            >
-              {busyLabel === "Choose Subtopic" ? "Loading lessons..." : "Load lessons"}
-            </button>
-          </form>
+        <LearningLoop
+          lesson={lesson}
+          selectedSubtopic={selectedSubtopic}
+          selectedLesson={selectedLesson}
+          handleSpeakSubtopic={handleSpeakSubtopic}
+          ttsSupported={ttsSupported}
+          isSpeakingSubtopic={isSpeakingSubtopic}
+          isSpeechPaused={isSpeechPaused}
+          question={question}
+          answer={answer}
+          setAnswer={setAnswer}
+          handleSubmitAnswer={handleSubmitAnswer}
+          busyLabel={busyLabel}
+        />
 
-          <form className="stack-card" onSubmit={handleChooseLesson}>
-            <label className="field">
-              <span>Lesson</span>
-              <select
-                value={selectedLesson}
-                onChange={(event) => setSelectedLesson(event.target.value)}
-                disabled={!lessons.length || !selectedSubtopic || Boolean(busyLabel)}
-              >
-                <option value="">Choose a lesson</option>
-                {lessons.map((lessonItem) => (
-                  <option key={lessonItem} value={lessonItem}>
-                    {(practicedLessonsMap[selectedSubtopic] ?? []).some(
-                      (item) => item.toLowerCase() === lessonItem.toLowerCase(),
-                    )
-                      ? `${lessonItem} (Practiced)`
-                      : lessonItem}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button
-              className="secondary-button"
-              type="submit"
-              disabled={!coachSessionId || !selectedSubtopic || !selectedLesson || Boolean(busyLabel)}
-            >
-              {busyLabel === "Choose Lesson" ? "Preparing lesson..." : "Load lesson and practice"}
-            </button>
-          </form>
+        <CoachEvaluation
+          score={score}
+          feedback={feedback}
+          strengths={strengths}
+          gaps={gaps}
+          coachChat={coachChat}
+          chatThreadRef={chatThreadRef}
+          explainerQuestion={explainerQuestion}
+          setExplainerQuestion={setExplainerQuestion}
+          handleExplainQuestion={handleExplainQuestion}
+          coachSessionId={coachSessionId}
+          busyLabel={busyLabel}
+        />
 
-          {(practicedSubtopics.length || completedLessonsForCurrentSubtopic.length || topicProgressPercent > 0) ? (
-            <div className="coach-progress-panel">
-              <div className="coach-progress-header">
-                <strong>Topic Progress</strong>
-                <span>{topicProgressPercent.toFixed(0)}%</span>
-              </div>
-              <div className="coach-progress-bar" aria-hidden="true">
-                <span style={{ width: `${topicProgressPercent}%` }} />
-              </div>
-              <p className="muted-copy coach-progress-copy">
-                Completed subtopics: {topicProgressMeta.practicedSubtopicsCount}/{topicProgressMeta.totalSubtopics} · Completed lessons: {topicProgressMeta.practicedLessonsCount}/{topicProgressMeta.totalLessons}
-              </p>
-
-              {practicedSubtopics.length ? (
-                <div className="coach-chip-block">
-                  <span className="coach-chip-title">Completed subtopics</span>
-                  <div className="coach-chip-list">
-                    {practicedSubtopics.map((item) => (
-                      <span className="coach-chip" key={item}>{item}</span>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-
-              {completedLessonsForCurrentSubtopic.length ? (
-                <div className="coach-chip-block">
-                  <span className="coach-chip-title">Completed lessons</span>
-                  <div className="coach-chip-list">
-                    {completedLessonsForCurrentSubtopic.map((item) => (
-                      <span className="coach-chip coach-chip-soft" key={item}>{item}</span>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          ) : null}
-
-          {suggestedNextSubtopic ? (
-            <div className="coach-suggestion">
-              <p className="muted-copy">
-                Suggested next subtopic: <strong>{suggestedNextSubtopic}</strong>
-              </p>
-              <button className="ghost-button" type="button" onClick={applySuggestedSubtopic}>
-                Use suggested subtopic
-              </button>
-            </div>
-          ) : null}
-
-        </article>
-
-        <article className="card stack-card tall-card">
-          <div className="card-heading">
-            <p className="eyebrow">3. Learn + Practice</p>
-            <h2>AI Teaching Loop</h2>
-          </div>
-
-          {lesson ? (
-            <div className="question-panel">
-              <div className="question-meta">
-                <div className="stack-card coach-subtopic-header">
-                  <span>Current Subtopic</span>
-                  <strong>{selectedSubtopic || "--"}</strong>
-                  <span>Current Lesson</span>
-                  <strong>{selectedLesson || "--"}</strong>
-                </div>
-                <button
-                  className="ghost-button coach-tts-button"
-                  type="button"
-                  onClick={handleSpeakSubtopic}
-                  disabled={!ttsSupported || !selectedSubtopic.trim()}
-                  aria-label="Read current subtopic aloud"
-                  title="Read current subtopic aloud"
-                >
-                  <svg
-                    aria-hidden="true"
-                    className="coach-tts-icon"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M12 15.5a3.5 3.5 0 0 0 3.5-3.5V6a3.5 3.5 0 1 0-7 0v6a3.5 3.5 0 0 0 3.5 3.5Z"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M5.5 11.5a6.5 6.5 0 1 0 13 0"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="M12 18v3"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="M9 21h6"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <span>
-                    {isSpeakingSubtopic
-                      ? isSpeechPaused
-                        ? "Resume"
-                        : "Pause"
-                      : "Read"}
-                  </span>
-                </button>
-              </div>
-              <div className="coach-lesson">
-                <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[[rehypeHighlight, { detect: true }]]}>
-                  {lesson}
-                </ReactMarkdown>
-              </div>
-            </div>
-          ) : null}
-
-          {question ? (
-            <form className="stack-card" onSubmit={handleSubmitAnswer}>
-              <label className="field">
-                <span>Coach Question</span>
-                <p className="coach-question">{question}</p>
-              </label>
-              <label className="field">
-                <span>Your Answer</span>
-                <textarea
-                  rows={6}
-                  value={answer}
-                  onChange={(event) => setAnswer(event.target.value)}
-                  placeholder="Write a structured answer with definition, example, and tradeoffs."
-                />
-              </label>
-              <button
-                className="primary-button"
-                type="submit"
-                disabled={!question || !answer.trim() || Boolean(busyLabel)}
-              >
-                {busyLabel === "Evaluate Answer" ? "Evaluating..." : "Submit answer"}
-              </button>
-            </form>
-          ) : (
-            <p className="muted-copy">Choose a subtopic to start the teaching loop.</p>
-          )}
-        </article>
-
-        <article className="card stack-card coach-side-panel">
-          <div className="card-heading">
-            <p className="eyebrow">4. Feedback + Doubts</p>
-            <h2>Coach Evaluation</h2>
-          </div>
-
-          <div className="coach-evaluation-compact">
-            {score !== null ? (
-              <>
-                <div className="coach-evaluation-score-row">
-                  <div className="coach-score-pill">
-                    <span>Score</span>
-                    <strong>{score}</strong>
-                  </div>
-                  <p className="muted-copy coach-feedback">{feedback || "Coach feedback will appear here."}</p>
-                </div>
-                <div className="coach-evaluation-columns">
-                  <article className="summary-item coach-summary-mini">
-                    <div className="summary-item-head">
-                      <strong>Strengths</strong>
-                    </div>
-                    <ul>
-                      {strengths.length ? strengths.map((item) => <li key={item}>{item}</li>) : <li>No strengths yet</li>}
-                    </ul>
-                  </article>
-                  <article className="summary-item coach-summary-mini">
-                    <div className="summary-item-head">
-                      <strong>Gaps</strong>
-                    </div>
-                    <ul>
-                      {gaps.length ? gaps.map((item) => <li key={item}>{item}</li>) : <li>No gaps yet</li>}
-                    </ul>
-                  </article>
-                </div>
-              </>
-            ) : (
-              <p className="muted-copy">Submit an answer to receive coach feedback and next steps.</p>
-            )}
-          </div>
-
-          <div className="coach-chat-panel">
-            <div className="coach-chat-header">
-              <p className="muted-copy coach-explainer-title">Cross-question and doubt clear chat</p>
-            </div>
-            <div className="coach-chat-thread" ref={chatThreadRef} role="log" aria-live="polite">
-              {coachChat.length ? (
-                coachChat.map((entry) => (
-                  <div className="coach-chat-entry" key={entry.id}>
-                    <div className="coach-chat-bubble coach-chat-user">
-                      <strong>You</strong>
-                      <p>{entry.question}</p>
-                    </div>
-                    <div className="coach-chat-bubble coach-chat-coach">
-                      <strong>Coach</strong>
-                      {entry.pending ? (
-                        <p className="muted-copy">Thinking...</p>
-                      ) : (
-                        <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[[rehypeHighlight, { detect: true }]]}>
-                          {entry.answer}
-                        </ReactMarkdown>
-                      )}
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="muted-copy">Ask any terminology, syntax, or follow-up question after each evaluation.</p>
-              )}
-            </div>
-            <form className="stack-card coach-chat-input" onSubmit={handleExplainQuestion}>
-              <label className="field">
-                <span>Ask coach</span>
-                <textarea
-                  rows={3}
-                  value={explainerQuestion}
-                  onChange={(event) => setExplainerQuestion(event.target.value)}
-                  placeholder="Example: Why is my answer weak on tradeoffs?"
-                />
-              </label>
-              <button
-                className="ghost-button"
-                type="submit"
-                disabled={!coachSessionId || !explainerQuestion.trim() || Boolean(busyLabel)}
-              >
-                {busyLabel === "Explain Concept" ? "Explaining..." : "Send to coach"}
-              </button>
-            </form>
-          </div>
-        </article>
-
-        <article className="card stack-card full-card">
-          <div className="card-heading">
-            <p className="eyebrow">5. Your Progress</p>
-            <h2>Revisit History</h2>
-          </div>
-
-          {progress ? (
-            <>
-              <p className="muted-copy">
-                Attempted coach topics: {progress.attempted_topics.personal_coach_topics.length || 0}
-              </p>
-              <div className="summary-list">
-                {progress.modules.personal_coach.length ? (
-                  progress.modules.personal_coach.map((item) => (
-                    <button
-                      className="summary-item summary-item-button"
-                      key={item.session_id}
-                      onClick={() => void handleResumeSession(item.session_id)}
-                      type="button"
-                    >
-                      <div className="summary-item-head">
-                        <strong>{item.topic}</strong>
-                        <span>{item.current_subtopic || item.suggested_next_subtopic || "Resume"}</span>
-                      </div>
-                      <small>
-                        Attempts: {item.attempt_count} · Avg score: {item.average_score ?? "--"}
-                      </small>
-                      <p className="muted-copy coach-session-progress-copy">
-                        Progress: {item.progress_percent ?? 0}% · Subtopics {item.practiced_subtopics_count ?? 0}/{item.total_subtopics ?? 0} · Lessons {item.practiced_lessons_count ?? 0}/{item.total_lessons ?? 0}
-                      </p>
-                      {(item.practiced_subtopics?.length ?? 0) > 0 ? (
-                        <div className="coach-chip-list coach-chip-list-compact">
-                          {item.practiced_subtopics?.slice(0, 6).map((subtopic) => (
-                            <span className="coach-chip" key={`${item.session_id}-${subtopic}`}>{subtopic}</span>
-                          ))}
-                        </div>
-                      ) : null}
-                    </button>
-                  ))
-                ) : (
-                  <p className="muted-copy">No coach attempts yet.</p>
-                )}
-              </div>
-
-              <p className="muted-copy">
-                Attempted interview topics: {progress.attempted_topics.interview_topics.join(", ") || "none"}
-              </p>
-
-              <div className="card-heading">
-                <p className="eyebrow">JD Analyzer History</p>
-                <h2>Saved Job Description Analyses</h2>
-              </div>
-              <div className="summary-list">
-                {progress.modules.job_description_analyzer.length ? (
-                  progress.modules.job_description_analyzer.map((item) => (
-                    <article className="summary-item" key={item.analysis_id}>
-                      <div className="summary-item-head">
-                        <strong>{item.company_name || "Unknown company"}</strong>
-                        <span>{item.application_last_date || item.application_last_date_raw || "No deadline"}</span>
-                      </div>
-                      <p className="muted-copy">
-                        Recruiter: {item.recruiter_name || "Not available"}
-                      </p>
-                      <p className="muted-copy">{item.recruiter_intent || "No recruiter intent summary"}</p>
-                      <small>{item.job_description_preview}</small>
-                    </article>
-                  ))
-                ) : (
-                  <p className="muted-copy">No JD analyses saved yet.</p>
-                )}
-              </div>
-            </>
-          ) : (
-            <p className="muted-copy">Loading your historical learning data...</p>
-          )}
-        </article>
+        <ProgressHistory
+          progress={progress}
+          handleResumeSession={handleResumeSession}
+        />
       </section>
     </main>
   );

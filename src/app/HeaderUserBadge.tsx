@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, useState, useRef, useEffect } from "react";
 import { useSession } from "@/lib/useSession";
 
@@ -8,6 +9,7 @@ export default function HeaderUserBadge() {
   const { session, isLoggedIn, logout } = useSession();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -75,6 +77,7 @@ export default function HeaderUserBadge() {
             onClick={() => {
               logout();
               setIsMenuOpen(false);
+              router.push("/auth");
             }}
           >
             Logout
