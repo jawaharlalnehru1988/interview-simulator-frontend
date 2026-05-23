@@ -1075,4 +1075,78 @@ export function submitMcqTest(baseUrl: string, auth: AuthState, interviewId: num
   }, auth);
 }
 
+// Coding Workspace Types
+export type StartCodingPayload = {
+  topic: string;
+  difficulty: "SUPER_EASY" | "EASY" | "MEDIUM" | "HARD" | "HARDER";
+  description?: string;
+};
+
+export type StartCodingResponse = {
+  interview_id: number;
+  topic: string;
+  difficulty: string;
+  question_id: number;
+  question_text: string;
+};
+
+export type SubmitCodingApproachPayload = {
+  approach: string;
+};
+
+export type SubmitCodingApproachResponse = {
+  approved: boolean;
+  feedback: string;
+  java_template?: string;
+  javascript_template?: string;
+};
+
+export type SubmitCodingCodePayload = {
+  language: string;
+  code: string;
+};
+
+export type SubmitCodingCodeResponse = {
+  score: number;
+  strengths: string[];
+  weaknesses: string[];
+  improvements: string[];
+  refactored_code: string;
+};
+
+export type SubmitCodingDirectResponse = {
+  score: number;
+  explanation: string;
+  correct_answer: string;
+};
+
+// Coding Workspace API Calls
+export function startCodingTest(baseUrl: string, auth: AuthState, payload: StartCodingPayload) {
+  return requestWithAuth<StartCodingResponse>(baseUrl, "/api/coding/generate", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  }, auth);
+}
+
+export function submitCodingApproach(baseUrl: string, auth: AuthState, interviewId: number, questionId: number, payload: SubmitCodingApproachPayload) {
+  return requestWithAuth<SubmitCodingApproachResponse>(baseUrl, `/api/coding/${interviewId}/${questionId}/submit-approach`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  }, auth);
+}
+
+export function submitCodingDirect(baseUrl: string, auth: AuthState, interviewId: number, questionId: number, payload: { answer: string }) {
+  return requestWithAuth<SubmitCodingDirectResponse>(baseUrl, `/api/coding/${interviewId}/${questionId}/submit-direct`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  }, auth);
+}
+
+export function submitCodingCode(baseUrl: string, auth: AuthState, interviewId: number, questionId: number, payload: SubmitCodingCodePayload) {
+  return requestWithAuth<SubmitCodingCodeResponse>(baseUrl, `/api/coding/${interviewId}/${questionId}/submit-code`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  }, auth);
+}
+
 export { ApiError };

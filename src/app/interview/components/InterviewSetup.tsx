@@ -61,8 +61,6 @@ export function InterviewSetup({
           >
             <option value="basic">Basic questions</option>
             <option value="critical_scenario">Critical Scenario</option>
-            <option value="mcq">MCQ</option>
-            <option value="coding">Coding</option>
           </select>
         </label>
         <button className="primary-button" disabled={Boolean(busyLabel)} type="submit">

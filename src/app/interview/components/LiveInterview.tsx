@@ -1,6 +1,8 @@
 import React, { FormEvent, Dispatch, SetStateAction } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeHighlight from "rehype-highlight";
+import "highlight.js/styles/atom-one-light.css";
 
 interface LiveInterviewProps {
   session: { roundType: string; interviewId: number | null };
@@ -9,28 +11,14 @@ interface LiveInterviewProps {
   showSuggestedAnswer: boolean;
   setShowSuggestedAnswer: Dispatch<SetStateAction<boolean>>;
   timeLeft: string;
-  selectedMcqOption: string;
-  setSelectedMcqOption: (val: string) => void;
   answerText: string;
   setAnswerText: (val: string) => void;
   handleSubmitAnswer: (e: FormEvent<HTMLFormElement>) => Promise<void>;
   handleNextQuestion: () => Promise<void>;
 }
 
-function extractCleanedQuestion(text: string, isMcq: boolean) {
-  if (!isMcq) {
-    return text.replace(/^Question:\s*/i, "");
-  }
-  let cleaned = text;
-  cleaned = cleaned.replace(/^Question:\s*/i, "");
-  const mcqPattern = /[\s?.!]\s*([A-D][).]|(?:\([A-D]\))|1[).])/;
-  const match = cleaned.match(mcqPattern);
-
-  if (match && match.index !== undefined) {
-    cleaned = cleaned.substring(0, match.index + 1).trim();
-  }
-
-  return cleaned;
+function extractCleanedQuestion(text: string) {
+  return text.replace(/^Question:\s*/i, "");
 }
 
 export function LiveInterview({
@@ -40,8 +28,6 @@ export function LiveInterview({
   showSuggestedAnswer,
   setShowSuggestedAnswer,
   timeLeft,
-  selectedMcqOption,
-  setSelectedMcqOption,
   answerText,
   setAnswerText,
   handleSubmitAnswer,
@@ -76,19 +62,26 @@ export function LiveInterview({
             </>
           )}
         </div>
-        <p className="question-text">
-          {extractCleanedQuestion(
-            currentQuestion?.question ?? "Fetch a question to begin.",
-            session.roundType === "mcq" && Boolean(currentQuestion?.mcq_options?.length),
-          )}
-        </p>
+        <div className="question-text markdown-body">
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            rehypePlugins={[[rehypeHighlight, { detect: true }]]}
+          >
+            {extractCleanedQuestion(
+              currentQuestion?.question ?? "Fetch a question to begin."
+            )}
+          </ReactMarkdown>
+        </div>
       </div>
 
       {showSuggestedAnswer ? (
         <div className="coach-suggestion">
           <p className="mcq-label">Suggested answer</p>
           <div className="question-text">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[[rehypeHighlight, { detect: true }]]}
+            >
               {currentQuestion?.suggested_answer?.trim() ||
                 "Suggested answer is not available for this question yet. Please fetch the next question."}
             </ReactMarkdown>
@@ -96,47 +89,16 @@ export function LiveInterview({
         </div>
       ) : null}
 
-      {session.roundType === "mcq" && currentQuestion?.mcq_options?.length ? (
-        <div className="mcq-options-wrapper">
-          <p className="mcq-label">Select the correct option:</p>
-          <div className="mcq-options">
-            {currentQuestion.mcq_options.map((option: string) => {
-              const checked = selectedMcqOption === option;
-              return (
-                <button
-                  key={option}
-                  className={`mcq-option ${checked ? "mcq-option-selected" : ""}`}
-                  onClick={() => {
-                    setSelectedMcqOption(option);
-                    setAnswerText(option);
-                  }}
-                  type="button"
-                >
-                  {option}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      ) : null}
-
       <form className="stack-card" onSubmit={handleSubmitAnswer}>
-        {session.roundType !== "mcq" && (
-          <label className="field">
-            <span>Your answer</span>
-            <textarea
-              rows={6}
-              value={answerText}
-              onChange={(event) => {
-                setAnswerText(event.target.value);
-                if (selectedMcqOption) {
-                  setSelectedMcqOption("");
-                }
-              }}
-              placeholder="Describe your design, tradeoffs, and production strategy."
-            />
-          </label>
-        )}
+        <label className="field">
+          <span>Your answer</span>
+          <textarea
+            rows={6}
+            value={answerText}
+            onChange={(event) => setAnswerText(event.target.value)}
+            placeholder="Describe your design, tradeoffs, and production strategy."
+          />
+        </label>
         <div className="button-row">
           <button
             className="primary-button"

@@ -2,6 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useState, FormEvent } from "react";
+import ReactMarkdown from "react-markdown";
+import rehypeHighlight from "rehype-highlight";
+import remarkGfm from "remark-gfm";
+import "highlight.js/styles/atom-one-light.css";
 import {
   ApiError,
   startMcqTest,
@@ -352,7 +356,17 @@ export default function McqTestPage() {
               </div>
 
               <div style={{ margin: "24px 0", fontSize: "1.2rem", fontWeight: 600, color: "var(--foreground)", lineHeight: "1.5" }}>
-                {currentQuestionIndex + 1}. {questions[currentQuestionIndex].question}
+                <div style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
+                  <span>{currentQuestionIndex + 1}.</span>
+                  <div style={{ flex: 1 }} className="markdown-body">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      rehypePlugins={[[rehypeHighlight, { detect: true }]]}
+                    >
+                      {questions[currentQuestionIndex].question}
+                    </ReactMarkdown>
+                  </div>
+                </div>
               </div>
 
               <div className="mcq-options-wrapper" style={{ margin: "24px 0 16px" }}>
@@ -517,9 +531,14 @@ export default function McqTestPage() {
                       </span>
                     </div>
 
-                    <p style={{ margin: "8px 0", fontWeight: 500, color: "var(--foreground)" }}>
-                      {item.question}
-                    </p>
+                    <div style={{ margin: "8px 0", fontWeight: 500, color: "var(--foreground)" }} className="markdown-body">
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        rehypePlugins={[[rehypeHighlight, { detect: true }]]}
+                      >
+                        {item.question}
+                      </ReactMarkdown>
+                    </div>
 
                     <div style={{ marginTop: "12px", display: "flex", flexDirection: "column", gap: "6px", fontSize: "0.95rem" }}>
                       <div>

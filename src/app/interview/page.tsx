@@ -70,7 +70,6 @@ export default function InterviewPage() {
   const [healthState, setHealthState] = useState("unknown");
   const [currentQuestion, setCurrentQuestion] = useState<NextQuestionResponse | null>(null);
   const [answerText, setAnswerText] = useState("");
-  const [selectedMcqOption, setSelectedMcqOption] = useState("");
   const [lastEvaluation, setLastEvaluation] = useState<EvaluationResult | null>(null);
   const [summary, setSummary] = useState<InterviewSummaryResponse | null>(null);
   const [history, setHistory] = useState<InterviewHistoryItem[]>([]);
@@ -224,7 +223,6 @@ export default function InterviewPage() {
       updateSession({ interviewId: newInterviewId, startedAt: Date.now() });
       setCurrentQuestion(null);
       setAnswerText("");
-      setSelectedMcqOption("");
       setLastEvaluation(null);
       setSummary(null);
 
@@ -261,7 +259,6 @@ export default function InterviewPage() {
       const response = await getNextQuestion(session.apiBaseUrl, authState, session.interviewId!);
       setCurrentQuestion(response);
       setAnswerText("");
-      setSelectedMcqOption("");
       setLastEvaluation(null);
       pushActivity(
         "Next Question",
@@ -303,7 +300,6 @@ export default function InterviewPage() {
         const nextQResponse = await getNextQuestion(session.apiBaseUrl, authState, session.interviewId!);
         setCurrentQuestion(nextQResponse);
         setAnswerText("");
-        setSelectedMcqOption("");
         pushActivity(
           "Next Question",
           `Loaded question ${nextQResponse.question_number} automatically.`
@@ -326,7 +322,6 @@ export default function InterviewPage() {
     });
     setCurrentQuestion(null);
     setAnswerText("");
-    setSelectedMcqOption("");
     setLastEvaluation(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -425,8 +420,6 @@ export default function InterviewPage() {
           showSuggestedAnswer={showSuggestedAnswer}
           setShowSuggestedAnswer={setShowSuggestedAnswer}
           timeLeft={timeLeft}
-          selectedMcqOption={selectedMcqOption}
-          setSelectedMcqOption={setSelectedMcqOption}
           answerText={answerText}
           setAnswerText={setAnswerText}
           handleSubmitAnswer={handleSubmitAnswer}

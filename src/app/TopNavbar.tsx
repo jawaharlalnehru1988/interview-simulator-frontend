@@ -131,6 +131,13 @@ export default function TopNavbar() {
               MCQ Test
             </Link>
             <Link
+              className={`nav-link ${pathname === "/coding" ? "active" : ""}`}
+              href="/coding"
+              onClick={handleNavClick}
+            >
+              Coding Workspace
+            </Link>
+            <Link
               className={`nav-link ${pathname === "/personal-coach" ? "active" : ""}`}
               href="/personal-coach"
               onClick={handleNavClick}
