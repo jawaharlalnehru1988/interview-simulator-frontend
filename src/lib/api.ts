@@ -1015,4 +1015,64 @@ export function resumeHRVoiceInterview(
   );
 }
 
+export type StartMcqTestPayload = {
+  topic: string;
+  difficulty: "SUPER_EASY" | "EASY" | "MEDIUM" | "HARD" | "HARDER";
+  description?: string;
+};
+
+export type McqTestQuestion = {
+  question_id: number;
+  question: string;
+  mcq_options: string[];
+  difficulty: string;
+  question_number: number;
+};
+
+export type StartMcqTestResponse = {
+  interview_id: number;
+  topic: string;
+  difficulty: string;
+  total_questions: number;
+  questions: McqTestQuestion[];
+};
+
+export type SubmitMcqTestPayload = {
+  answers: Array<{
+    questionId: number;
+    answer: string;
+  }>;
+};
+
+export type McqQuestionResult = {
+  question_id: number;
+  question: string;
+  mcq_options: string[];
+  user_answer: string;
+  correct_answer: string;
+  is_correct: boolean;
+};
+
+export type SubmitMcqTestResponse = {
+  interview_id: number;
+  total_questions: number;
+  correct_answers: number;
+  score_percentage: number;
+  results: McqQuestionResult[];
+};
+
+export function startMcqTest(baseUrl: string, auth: AuthState, payload: StartMcqTestPayload) {
+  return requestWithAuth<StartMcqTestResponse>(baseUrl, "/api/mcq-test/generate", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  }, auth);
+}
+
+export function submitMcqTest(baseUrl: string, auth: AuthState, interviewId: number, payload: SubmitMcqTestPayload) {
+  return requestWithAuth<SubmitMcqTestResponse>(baseUrl, `/api/mcq-test/${interviewId}/submit`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  }, auth);
+}
+
 export { ApiError };
