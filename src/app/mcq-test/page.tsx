@@ -6,6 +6,7 @@ import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import remarkGfm from "remark-gfm";
 import "highlight.js/styles/atom-one-light.css";
+import { useTopics } from "@/context/TopicContext";
 import {
   ApiError,
   startMcqTest,
@@ -56,11 +57,24 @@ export default function McqTestPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [busyLabel, setBusyLabel] = useState("");
 
+  const { topics, setIsAddTopicOpen } = useTopics();
+  const [prevTopicsLength, setPrevTopicsLength] = useState(0);
+
   // Quiz State
-  const [topic, setTopic] = useState("Java 8");
-  const [customTopic, setCustomTopic] = useState("");
+  const [topic, setTopic] = useState("");
   const [difficulty, setDifficulty] = useState<"SUPER_EASY" | "EASY" | "MEDIUM" | "HARD" | "HARDER">("MEDIUM");
   const [customDescription, setCustomDescription] = useState("");
+
+  useEffect(() => {
+    if (topics.length > prevTopicsLength) {
+      if (prevTopicsLength > 0) {
+        setTopic(topics[0].name);
+      } else if (!topic || !topics.some(t => t.name === topic)) {
+        setTopic(topics[0].name);
+      }
+    }
+    setPrevTopicsLength(topics.length);
+  }, [topics, prevTopicsLength, topic]);
   
   const [activeTestId, setActiveTestId] = useState<number | null>(null);
   const [questions, setQuestions] = useState<McqTestQuestion[]>([]);
@@ -136,8 +150,8 @@ export default function McqTestPage() {
     setErrorMessage("");
     setBusyLabel("Generating Test...");
 
-    const finalTopic = topic === "custom" ? customTopic : topic;
-    if (!finalTopic.trim()) {
+    const finalTopic = topic;
+    if (!finalTopic || !finalTopic.trim()) {
       setErrorMessage("Please specify a topic.");
       setBusyLabel("");
       return;
@@ -264,28 +278,22 @@ export default function McqTestPage() {
                 <span>Select Topic</span>
                 <select
                   value={topic}
-                  onChange={(e) => setTopic(e.target.value)}
+                  onChange={(e) => {
+                    if (e.target.value === "add_new_topic") {
+                      setIsAddTopicOpen(true);
+                    } else {
+                      setTopic(e.target.value);
+                    }
+                  }}
                 >
-                  {PREDEFINED_TOPICS.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
+                  {topics.map((t) => (
+                    <option key={t.id} value={t.name}>
+                      {t.name}
                     </option>
                   ))}
-                  <option value="custom">Other (Type your own)</option>
+                  <option value="add_new_topic">➕ Add new topic...</option>
                 </select>
               </label>
-
-              {topic === "custom" && (
-                <label className="field">
-                  <span>Custom Topic</span>
-                  <input
-                    value={customTopic}
-                    onChange={(e) => setCustomTopic(e.target.value)}
-                    placeholder="Enter custom topic name"
-                    required
-                  />
-                </label>
-              )}
 
               <div className="field">
                 <span>Difficulty Level</span>

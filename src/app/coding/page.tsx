@@ -7,6 +7,7 @@ import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import "highlight.js/styles/atom-one-light.css";
 import Editor from "@monaco-editor/react";
+import { useTopics } from "@/context/TopicContext";
 import {
   ApiError,
   startCodingTest,
@@ -45,10 +46,24 @@ export default function CodingPage() {
   const [successMessage, setSuccessMessage] = useState("");
   const [busyLabel, setBusyLabel] = useState("");
 
+  const { topics, setIsAddTopicOpen } = useTopics();
+  const [prevTopicsLength, setPrevTopicsLength] = useState(0);
+
   // Quiz Setup State
-  const [topic, setTopic] = useState("Java");
+  const [topic, setTopic] = useState("");
   const [difficulty, setDifficulty] = useState<"SUPER_EASY" | "EASY" | "MEDIUM" | "HARD" | "HARDER">("MEDIUM");
   const [customDescription, setCustomDescription] = useState("");
+
+  useEffect(() => {
+    if (topics.length > prevTopicsLength) {
+      if (prevTopicsLength > 0) {
+        setTopic(topics[0].name);
+      } else if (!topic || !topics.some(t => t.name === topic)) {
+        setTopic(topics[0].name);
+      }
+    }
+    setPrevTopicsLength(topics.length);
+  }, [topics, prevTopicsLength, topic]);
 
   // Active Session State
   const [activeInterviewId, setActiveInterviewId] = useState<number | null>(null);
@@ -320,12 +335,22 @@ export default function CodingPage() {
           <form className="stack-card" onSubmit={handleStartCodingSession}>
             <label className="field">
               <span>Select Technology Stack</span>
-              <select value={topic} onChange={(e) => setTopic(e.target.value)}>
-                {PREDEFINED_TOPICS.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
+              <select
+                value={topic}
+                onChange={(e) => {
+                  if (e.target.value === "add_new_topic") {
+                    setIsAddTopicOpen(true);
+                  } else {
+                    setTopic(e.target.value);
+                  }
+                }}
+              >
+                {topics.map((t) => (
+                  <option key={t.id} value={t.name}>
+                    {t.name}
                   </option>
                 ))}
+                <option value="add_new_topic">➕ Add new topic...</option>
               </select>
             </label>
 

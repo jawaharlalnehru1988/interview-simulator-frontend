@@ -702,13 +702,13 @@ export function getInterviewHistory(baseUrl: string, auth: AuthState) {
   );
 }
 
-export async function startPersonalCoach(baseUrl: string, auth: AuthState, topic: string) {
+export async function startPersonalCoach(baseUrl: string, auth: AuthState, topic: string, note?: string) {
   const res = await requestWithAuth<any>(
     baseUrl,
     "/api/interview/coach/start/",
     {
       method: "POST",
-      body: JSON.stringify({ topic }),
+      body: JSON.stringify({ topic, note }),
     },
     auth,
   );
@@ -1146,6 +1146,24 @@ export function submitCodingCode(baseUrl: string, auth: AuthState, interviewId: 
   return requestWithAuth<SubmitCodingCodeResponse>(baseUrl, `/api/coding/${interviewId}/${questionId}/submit-code`, {
     method: "POST",
     body: JSON.stringify(payload),
+  }, auth);
+}
+
+export type TopicResponse = {
+  id: number;
+  name: string;
+  description: string;
+  created_at: string;
+};
+
+export function getTopics(baseUrl: string, auth: AuthState) {
+  return requestWithAuth<TopicResponse[]>(baseUrl, "/api/topics/", { method: "GET" }, auth);
+}
+
+export function createTopic(baseUrl: string, auth: AuthState, name: string, description: string) {
+  return requestWithAuth<TopicResponse>(baseUrl, "/api/topics/", {
+    method: "POST",
+    body: JSON.stringify({ name, description }),
   }, auth);
 }
 

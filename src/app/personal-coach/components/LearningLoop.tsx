@@ -1,4 +1,4 @@
-import React, { FormEvent } from "react";
+import React, { FormEvent, useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import remarkGfm from "remark-gfm";
@@ -32,6 +32,42 @@ export function LearningLoop({
   handleSubmitAnswer,
   busyLabel,
 }: LearningLoopProps) {
+  const [selectedAnswers, setSelectedAnswers] = useState<Record<number, string>>({});
+
+  let parsedQuestions: Array<{
+    question: string;
+    options: string[];
+    correctAnswer: string;
+    explanation: string;
+  }> = [];
+
+  let isMcq = false;
+  try {
+    if (question && (question.trim().startsWith("[") || question.trim().startsWith("{"))) {
+      const parsed = JSON.parse(question.trim());
+      parsedQuestions = Array.isArray(parsed) ? parsed : (parsed.questions || []);
+      isMcq = parsedQuestions.length > 0;
+    }
+  } catch (e) {
+    // Not a JSON MCQ array
+  }
+
+  useEffect(() => {
+    setSelectedAnswers({});
+  }, [question]);
+
+  const handleOptionChange = (qIndex: number, option: string) => {
+    const updated = { ...selectedAnswers, [qIndex]: option };
+    setSelectedAnswers(updated);
+    
+    // Create an ordered array of user answers
+    const answersList = parsedQuestions.map((_, idx) => updated[idx] || "");
+    setAnswer(JSON.stringify(answersList));
+  };
+
+  const allAnswered = isMcq && parsedQuestions.length > 0 &&
+    parsedQuestions.every((_, idx) => selectedAnswers[idx] !== undefined && selectedAnswers[idx] !== "");
+
   return (
     <article className="card stack-card tall-card">
       <div className="card-heading">
@@ -108,23 +144,55 @@ export function LearningLoop({
 
       {question ? (
         <form className="stack-card" onSubmit={handleSubmitAnswer}>
-          <label className="field">
-            <span>Coach Question</span>
-            <p className="coach-question">{question}</p>
-          </label>
-          <label className="field">
-            <span>Your Answer</span>
-            <textarea
-              rows={6}
-              value={answer}
-              onChange={(event) => setAnswer(event.target.value)}
-              placeholder="Write a structured answer with definition, example, and tradeoffs."
-            />
-          </label>
+          {isMcq ? (
+            <div className="field">
+              <span>Coach Questions</span>
+              <div className="mcq-list" style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginTop: '10px' }}>
+                {parsedQuestions.map((q, qIdx) => (
+                  <div key={qIdx} className="mcq-item" style={{ borderBottom: '1px solid var(--line)', paddingBottom: '20px' }}>
+                    <p className="question-text" style={{ fontWeight: '600', marginBottom: '12px' }}>
+                      Q{qIdx + 1}. {q.question}
+                    </p>
+                    <div className="mcq-options">
+                      {q.options.map((option, optIdx) => {
+                        const isSelected = selectedAnswers[qIdx] === option;
+                        return (
+                          <button
+                            key={optIdx}
+                            type="button"
+                            className={`mcq-option ${isSelected ? "mcq-option-selected" : ""}`}
+                            onClick={() => handleOptionChange(qIdx, option)}
+                          >
+                            {option}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <>
+              <label className="field">
+                <span>Coach Question</span>
+                <p className="coach-question">{question}</p>
+              </label>
+              <label className="field">
+                <span>Your Answer</span>
+                <textarea
+                  rows={6}
+                  value={answer}
+                  onChange={(event) => setAnswer(event.target.value)}
+                  placeholder="Write a structured answer with definition, example, and tradeoffs."
+                />
+              </label>
+            </>
+          )}
           <button
             className="primary-button"
             type="submit"
-            disabled={!question || !answer.trim() || Boolean(busyLabel)}
+            disabled={!question || (isMcq ? !allAnswered : !answer.trim()) || Boolean(busyLabel)}
           >
             {busyLabel === "Evaluate Answer" ? "Evaluating..." : "Submit answer"}
           </button>

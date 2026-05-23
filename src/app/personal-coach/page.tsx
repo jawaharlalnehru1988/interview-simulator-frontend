@@ -6,6 +6,7 @@ import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import remarkGfm from "remark-gfm";
 import "highlight.js/styles/atom-one-light.css";
+import { useTopics } from "@/context/TopicContext";
 
 import {
   ApiError,
@@ -65,8 +66,23 @@ export default function PersonalCoachPage() {
     "backend security",
   ];
 
-  const [topic, setTopic] = useState("Java 8");
+  const { topics, setIsAddTopicOpen } = useTopics();
+  const [prevTopicsLength, setPrevTopicsLength] = useState(0);
+
+  const [topic, setTopic] = useState("");
+  const [note, setNote] = useState("");
   const [coachSessionId, setCoachSessionId] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (topics.length > prevTopicsLength) {
+      if (prevTopicsLength > 0) {
+        setTopic(topics[0].name);
+      } else if (!topic || !topics.some(t => t.name === topic)) {
+        setTopic(topics[0].name);
+      }
+    }
+    setPrevTopicsLength(topics.length);
+  }, [topics, prevTopicsLength, topic]);
   const [subtopics, setSubtopics] = useState<string[]>([]);
   const [selectedSubtopic, setSelectedSubtopic] = useState("");
   const [lessons, setLessons] = useState<string[]>([]);
@@ -308,10 +324,11 @@ export default function PersonalCoachPage() {
     }
 
     await runAction("Start Coach", async () => {
-      const response = await startPersonalCoach(session.apiBaseUrl, authState, topic.trim());
+      const response = await startPersonalCoach(session.apiBaseUrl, authState, topic.trim(), note.trim());
       setCoachSessionId(response.session_id);
       setSubtopics(response.subtopics ?? []);
       setSelectedSubtopic("");
+      setNote("");
       setLessons([]);
       setSelectedLesson("");
       setPracticedSubtopics([]);
@@ -619,8 +636,11 @@ export default function PersonalCoachPage() {
         <TopicInput
           topic={topic}
           setTopic={setTopic}
+          note={note}
+          setNote={setNote}
           busyLabel={busyLabel}
-          predefinedTopics={PREDEFINED_TOPICS}
+          topics={topics}
+          setIsAddTopicOpen={setIsAddTopicOpen}
           handleStartCoach={handleStartCoach}
         />
 

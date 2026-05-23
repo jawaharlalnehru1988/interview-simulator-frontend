@@ -5,9 +5,12 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "@/lib/useSession";
 import HeaderUserBadge from "./HeaderUserBadge";
+import { useTopics } from "@/context/TopicContext";
+import { APP_ROUTES } from "@/lib/routes";
 
 export default function TopNavbar() {
   const { isLoggedIn, logout } = useSession();
+  const { setIsAddTopicOpen } = useTopics();
   const pathname = usePathname();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -84,6 +87,16 @@ export default function TopNavbar() {
           </button>
 
           <nav className={`site-nav ${menuOpen ? "open" : ""}`} aria-label="Primary">
+            {APP_ROUTES.filter(r => r.path === "/").map(r => (
+              <Link
+                key={r.path}
+                className={`nav-link ${pathname === r.path ? "active" : ""}`}
+                href={r.path}
+                onClick={handleNavClick}
+              >
+                {r.name}
+              </Link>
+            ))}
             {!isLoggedIn && !isAuthPage && (
               <Link
                 className={`nav-link ${pathname === "/auth" ? "active" : ""}`}
@@ -111,68 +124,27 @@ export default function TopNavbar() {
                 </Link>
               </>
             )}
-            {isLoggedIn && (
-              <button className="nav-link nav-action" onClick={handleLogout} type="button">
-                Logout
-              </button>
-            )}
-            <Link
-              className={`nav-link ${pathname === "/interview" ? "active" : ""}`}
-              href="/interview"
-              onClick={handleNavClick}
-            >
-              Interview
-            </Link>
-            <Link
-              className={`nav-link ${pathname === "/mcq-test" ? "active" : ""}`}
-              href="/mcq-test"
-              onClick={handleNavClick}
-            >
-              MCQ Test
-            </Link>
-            <Link
-              className={`nav-link ${pathname === "/coding" ? "active" : ""}`}
-              href="/coding"
-              onClick={handleNavClick}
-            >
-              Coding Workspace
-            </Link>
-            <Link
-              className={`nav-link ${pathname === "/personal-coach" ? "active" : ""}`}
-              href="/personal-coach"
-              onClick={handleNavClick}
-            >
-              Personal Coach
-            </Link>
-            <Link
-              className={`nav-link ${pathname === "/job-analyzer" ? "active" : ""}`}
-              href="/job-analyzer"
-              onClick={handleNavClick}
-            >
-              JD Analyzer
-            </Link>
-            <Link
-              className={`nav-link ${pathname === "/aspiration" ? "active" : ""}`}
-              href="/aspiration"
-              onClick={handleNavClick}
-            >
-              Aspiration
-            </Link>
-            <Link
-              className={`nav-link ${pathname === "/profile-settings" ? "active" : ""}`}
-              href="/profile-settings"
-              onClick={handleNavClick}
-            >
-              Profile
-            </Link>
-            <Link
-              className={`nav-link ${pathname === "/hr-voice-call" ? "active" : ""}`}
-              href="/hr-voice-call"
-              onClick={handleNavClick}
-            >
-              HR Voice Call
-            </Link>
+            {APP_ROUTES.filter(r => r.path !== "/").map(r => (
+              <Link
+                key={r.path}
+                className={`nav-link ${pathname === r.path ? "active" : ""}`}
+                href={r.path}
+                onClick={handleNavClick}
+              >
+                {r.name}
+              </Link>
+            ))}
           </nav>
+           {isLoggedIn && (
+            <button
+              className="nav-link nav-action"
+              onClick={() => setIsAddTopicOpen(true)}
+              style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}
+              type="button"
+            >
+              ➕ Add Topic
+            </button>
+          )}
           <HeaderUserBadge />
         </div>
       </header>

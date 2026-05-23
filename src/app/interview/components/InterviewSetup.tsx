@@ -3,7 +3,8 @@ import React, { FormEvent } from "react";
 interface InterviewSetupProps {
   session: { topic: string; roundType: string };
   updateSession: (updates: Partial<{ topic: string; roundType: string }>) => void;
-  predefinedTopics: string[];
+  topics: { id: number; name: string; description: string }[];
+  setIsAddTopicOpen: (open: boolean) => void;
   busyLabel: string;
   handleStartInterview: (event: FormEvent<HTMLFormElement>) => Promise<void>;
 }
@@ -11,7 +12,8 @@ interface InterviewSetupProps {
 export function InterviewSetup({
   session,
   updateSession,
-  predefinedTopics,
+  topics,
+  setIsAddTopicOpen,
   busyLabel,
   handleStartInterview,
 }: InterviewSetupProps) {
@@ -25,34 +27,23 @@ export function InterviewSetup({
         <label className="field">
           <span>Topic</span>
           <select
-            value={predefinedTopics.includes(session.topic) ? session.topic : "custom"}
+            value={session.topic}
             onChange={(event) => {
-              if (event.target.value === "custom") {
-                updateSession({ topic: "" });
+              if (event.target.value === "add_new_topic") {
+                setIsAddTopicOpen(true);
               } else {
                 updateSession({ topic: event.target.value });
               }
             }}
           >
-            {predefinedTopics.map((topic) => (
-              <option key={topic} value={topic}>
-                {topic}
+            {topics.map((item) => (
+              <option key={item.id} value={item.name}>
+                {item.name}
               </option>
             ))}
-            <option value="custom">Other (Type your own)</option>
+            <option value="add_new_topic">➕ Add new topic...</option>
           </select>
         </label>
-        {!predefinedTopics.includes(session.topic) && (
-          <label className="field">
-            <span>Custom Topic</span>
-            <input
-              value={session.topic}
-              onChange={(event) => updateSession({ topic: event.target.value })}
-              placeholder="Enter a custom topic"
-              required
-            />
-          </label>
-        )}
         <label className="field">
           <span>Round type</span>
           <select
