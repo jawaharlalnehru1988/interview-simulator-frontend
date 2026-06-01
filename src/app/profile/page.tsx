@@ -72,9 +72,6 @@ export default function ProfilePage() {
             <Link className="secondary-button link-button" href="/interview">
               My Interviews
             </Link>
-            <Link className="secondary-button link-button" href="/personal-coach">
-              Coach Sessions
-            </Link>
             <Link className="ghost-button link-button" href="/">
               Back to Dashboard
             </Link>

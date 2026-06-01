@@ -302,9 +302,6 @@ export default function AspirationPage() {
           <Link className="secondary-button link-button" href="/job-analyzer">
             Open JD analyzer
           </Link>
-          <Link className="ghost-button link-button" href="/personal-coach">
-            Open personal coach
-          </Link>
         </div>
       </section>
 

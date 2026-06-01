@@ -42,15 +42,7 @@ export const APP_ROUTES: AppRoute[] = [
     showInDropdown: true,
     showAsCard: true,
   },
-  {
-    path: "/personal-coach",
-    name: "Personal Coach",
-    cardEyebrow: "Personal Learning",
-    cardTitle: "Personal Coach",
-    cardDescription: "Enter any topic, pick AI-generated subtopics, learn from concise lessons, answer coach questions, and get adaptive remediation.",
-    showInDropdown: true,
-    showAsCard: true,
-  },
+
   {
     path: "/job-analyzer",
     name: "JD Analyzer",
@@ -66,6 +58,15 @@ export const APP_ROUTES: AppRoute[] = [
     cardEyebrow: "Career Direction",
     cardTitle: "Aspiration Planner",
     cardDescription: "Capture your current position, target role, timeline, and constraints to build a practical roadmap with phased milestones.",
+    showInDropdown: true,
+    showAsCard: true,
+  },
+  {
+    path: "/syllabus-generator",
+    name: "Syllabus",
+    cardEyebrow: "Learning Plan",
+    cardTitle: "Syllabus Generator",
+    cardDescription: "Type any broader topic, generate a structured syllabus of topics and subtopics, and convert it into a tracking checklist with completion dates.",
     showInDropdown: true,
     showAsCard: true,
   },

@@ -165,9 +165,6 @@ export default function JobAnalyzerPage() {
           <Link className="secondary-button link-button" href="/auth">
             Open auth route
           </Link>
-          <Link className="ghost-button link-button" href="/personal-coach">
-            Open personal coach
-          </Link>
         </div>
       </section>
 

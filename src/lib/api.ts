@@ -95,113 +95,11 @@ export type InterviewHistoryResponse = {
   interviews: InterviewHistoryItem[];
 };
 
-export type StartCoachResponse = {
-  session_id: number;
-  topic: string;
-  subtopics: string[];
-  lessons_by_subtopic?: Record<string, string[]>;
-  stage: string;
-  coach_prompt: string;
-};
-
-export type ChooseCoachSubtopicResponse = {
-  session_id: number;
-  topic: string;
-  subtopic: string;
-  lessons: string[];
-  practiced_subtopics?: string[];
-  practiced_lessons?: string[];
-  stage: string;
-  coach_prompt: string;
-};
-
-export type ChooseCoachLessonResponse = {
-  session_id: number;
-  topic: string;
-  subtopic: string;
-  selected_lesson: string;
-  practiced_subtopics?: string[];
-  practiced_lessons?: string[];
-  total_subtopics?: number;
-  practiced_subtopics_count?: number;
-  total_lessons?: number;
-  practiced_lessons_count?: number;
-  progress_percent?: number;
-  stage: string;
-  lesson: string;
-  question: string;
-  coach_prompt: string;
-};
-
-export type CoachAnswerResponse = {
-  session_id: number;
-  topic: string;
-  subtopic: string;
-  selected_lesson?: string;
-  practiced_subtopics?: string[];
-  practiced_lessons?: string[];
-  total_subtopics?: number;
-  practiced_subtopics_count?: number;
-  total_lessons?: number;
-  practiced_lessons_count?: number;
-  progress_percent?: number;
-  score: number;
-  strengths: string[];
-  gaps: string[];
-  feedback: string;
-  stage: string;
-  coach_decision?: "advance" | "remediate";
-  suggested_next_subtopic?: string;
-  subtopics?: string[];
-  next_question?: string;
-  coach_prompt?: string;
-};
-
-export type CoachExplainResponse = {
-  session_id: number;
-  topic: string;
-  subtopic: string;
-  learner_question: string;
-  explanation: string;
-};
-
-export type ResumeCoachResponse = {
-  session_id: number;
-  topic: string;
-  subtopics: string[];
-  lessons_by_subtopic?: Record<string, string[]>;
-  selected_subtopic: string;
-  selected_lesson: string;
-  available_lessons?: string[];
-  practiced_subtopics?: string[];
-  practiced_lessons?: string[];
-  practiced_lessons_map?: Record<string, string[]>;
-  total_subtopics?: number;
-  practiced_subtopics_count?: number;
-  total_lessons?: number;
-  practiced_lessons_count?: number;
-  progress_percent?: number;
-  stage: string;
-  lesson: string;
-  question: string;
-  attempt_count: number;
-  suggested_next_subtopic: string;
-  latest_attempt: {
-    score: number;
-    strengths: string[];
-    gaps: string[];
-    feedback: string;
-    coach_decision: "advance" | "remediate";
-  } | null;
-  coach_prompt: string;
-};
-
 export type UserLearningProgressResponse = {
   user: string;
   profile_ready?: boolean;
   attempted_topics: {
     interview_topics: string[];
-    personal_coach_topics: string[];
   };
   modules: {
     interview: Array<{
@@ -211,25 +109,6 @@ export type UserLearningProgressResponse = {
       status: string;
       questions_asked: number;
       average_score: number | null;
-      last_updated: string;
-    }>;
-    personal_coach: Array<{
-      session_id: number;
-      id?: number;
-      topic: string;
-      current_subtopic: string;
-      stage: string;
-      attempt_count: number;
-      latest_score: number | null;
-      average_score: number | null;
-      suggested_next_subtopic: string;
-      practiced_subtopics?: string[];
-      practiced_lessons_map?: Record<string, string[]>;
-      total_subtopics?: number;
-      practiced_subtopics_count?: number;
-      total_lessons?: number;
-      practiced_lessons_count?: number;
-      progress_percent?: number;
       last_updated: string;
     }>;
     job_description_analyzer: Array<{
@@ -265,11 +144,6 @@ export type UserLearningProgressResponse = {
       last_updated: string;
     }>;
   };
-  personal_coach_topic_stats: Array<{
-    topic: string;
-    total_attempts: number;
-    average_score: number | null;
-  }>;
 };
 
 export type JobDescriptionAnalysisResponse = {
@@ -702,109 +576,7 @@ export function getInterviewHistory(baseUrl: string, auth: AuthState) {
   );
 }
 
-export async function startPersonalCoach(baseUrl: string, auth: AuthState, topic: string, note?: string) {
-  const res = await requestWithAuth<any>(
-    baseUrl,
-    "/api/interview/coach/start/",
-    {
-      method: "POST",
-      body: JSON.stringify({ topic, note }),
-    },
-    auth,
-  );
-  return {
-    ...res,
-    session_id: res.id || res.session_id,
-    subtopics: typeof res.subtopics === "string" ? JSON.parse(res.subtopics || "[]") : (res.subtopics || []),
-  } as StartCoachResponse;
-}
 
-export function choosePersonalCoachSubtopic(
-  baseUrl: string,
-  auth: AuthState,
-  sessionId: number,
-  subtopic: string,
-) {
-  return requestWithAuth<ChooseCoachSubtopicResponse>(
-    baseUrl,
-    `/api/interview/coach/${sessionId}/choose-subtopic/`,
-    {
-      method: "POST",
-      body: JSON.stringify({ subtopic }),
-    },
-    auth,
-  );
-}
-
-export function choosePersonalCoachLesson(
-  baseUrl: string,
-  auth: AuthState,
-  sessionId: number,
-  lesson: string,
-) {
-  return requestWithAuth<ChooseCoachLessonResponse>(
-    baseUrl,
-    `/api/interview/coach/${sessionId}/choose-lesson/`,
-    {
-      method: "POST",
-      body: JSON.stringify({ lesson }),
-    },
-    auth,
-  );
-}
-
-export function answerPersonalCoachQuestion(
-  baseUrl: string,
-  auth: AuthState,
-  sessionId: number,
-  answer: string,
-) {
-  return requestWithAuth<CoachAnswerResponse>(
-    baseUrl,
-    `/api/interview/coach/${sessionId}/answer/`,
-    {
-      method: "POST",
-      body: JSON.stringify({ answer }),
-    },
-    auth,
-  );
-}
-
-export function explainPersonalCoachQuery(
-  baseUrl: string,
-  auth: AuthState,
-  sessionId: number,
-  question: string,
-) {
-  return requestWithAuth<CoachExplainResponse>(
-    baseUrl,
-    `/api/interview/coach/${sessionId}/explain/`,
-    {
-      method: "POST",
-      body: JSON.stringify({ question }),
-    },
-    auth,
-  );
-}
-
-export async function resumePersonalCoachSession(
-  baseUrl: string,
-  auth: AuthState,
-  sessionId: number,
-) {
-  const res = await requestWithAuth<any>(
-    baseUrl,
-    `/api/interview/coach/${sessionId}/resume/`,
-    { method: "GET" },
-    auth,
-  );
-  return {
-    ...res,
-    session_id: res.id || res.session_id,
-    subtopics: typeof res.subtopics === "string" ? JSON.parse(res.subtopics || "[]") : (res.subtopics || []),
-    lessons: res.lessons || [],
-  } as ResumeCoachResponse;
-}
 
 export function getUserLearningProgress(baseUrl: string, auth: AuthState) {
   return requestWithAuth<UserLearningProgressResponse>(
@@ -1164,6 +936,69 @@ export function createTopic(baseUrl: string, auth: AuthState, name: string, desc
   return requestWithAuth<TopicResponse>(baseUrl, "/api/topics/", {
     method: "POST",
     body: JSON.stringify({ name, description }),
+  }, auth);
+}
+
+// Syllabus Generator Types
+export type SyllabusTopicItem = {
+  title: string;
+  subtopics: string[];
+};
+
+export type SyllabusChecklistItem = {
+  id: string;
+  topic: string;
+  subtopic: string;
+  completed: boolean;
+  completedAt: string | null;
+};
+
+export type SyllabusResponse = {
+  id: number;
+  topic: string;
+  syllabus: SyllabusTopicItem[];
+  converted_to_checklist: boolean;
+  checklist: SyllabusChecklistItem[];
+  created_at: string;
+  updated_at: string;
+};
+
+// Syllabus Generator API Calls
+export function generateSyllabus(baseUrl: string, auth: AuthState, topic: string) {
+  return requestWithAuth<SyllabusResponse>(baseUrl, "/api/interview/syllabus/generate/", {
+    method: "POST",
+    body: JSON.stringify({ topic }),
+  }, auth);
+}
+
+export function convertToSyllabusChecklist(baseUrl: string, auth: AuthState, syllabusId: number) {
+  return requestWithAuth<SyllabusResponse>(baseUrl, `/api/interview/syllabus/${syllabusId}/convert/`, {
+    method: "POST",
+  }, auth);
+}
+
+export function toggleSyllabusChecklistItem(
+  baseUrl: string,
+  auth: AuthState,
+  syllabusId: number,
+  itemId: string,
+  completed: boolean,
+) {
+  return requestWithAuth<SyllabusResponse>(baseUrl, `/api/interview/syllabus/${syllabusId}/toggle/`, {
+    method: "POST",
+    body: JSON.stringify({ item_id: itemId, completed }),
+  }, auth);
+}
+
+export function getSyllabusHistory(baseUrl: string, auth: AuthState) {
+  return requestWithAuth<SyllabusResponse[]>(baseUrl, "/api/interview/syllabus/history/", {
+    method: "GET",
+  }, auth);
+}
+
+export function getSyllabusDetails(baseUrl: string, auth: AuthState, syllabusId: number) {
+  return requestWithAuth<SyllabusResponse>(baseUrl, `/api/interview/syllabus/${syllabusId}/`, {
+    method: "GET",
   }, auth);
 }
 
