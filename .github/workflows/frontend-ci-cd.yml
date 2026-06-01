@@ -59,6 +59,8 @@ jobs:
 
             echo ">>> Pulling latest code"
             cd "$FRONTEND_DIR"
+            git reset --hard HEAD
+            git clean -fd
             git pull origin master
 
             echo ">>> Installing dependencies"
