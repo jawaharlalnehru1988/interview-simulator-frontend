@@ -1002,4 +1002,61 @@ export function getSyllabusDetails(baseUrl: string, auth: AuthState, syllabusId:
   }, auth);
 }
 
+export type SyllabusExplanationResponse = {
+  id: number;
+  topic: string;
+  subtopic: string;
+  explanation: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export function explainSyllabusSubtopic(
+  baseUrl: string,
+  auth: AuthState,
+  syllabusId: number,
+  topic: string,
+  subtopic: string,
+) {
+  return requestWithAuth<{ explanation: string }>(
+    baseUrl,
+    "/api/interview/syllabus/explain",
+    {
+      method: "POST",
+      body: JSON.stringify({ syllabus_id: syllabusId, topic, subtopic }),
+    },
+    auth,
+  );
+}
+
+export function saveSyllabusExplanation(
+  baseUrl: string,
+  auth: AuthState,
+  syllabusId: number,
+  topic: string,
+  subtopic: string,
+  explanation: string,
+) {
+  return requestWithAuth<SyllabusExplanationResponse>(
+    baseUrl,
+    "/api/interview/syllabus/explanation/save",
+    {
+      method: "POST",
+      body: JSON.stringify({ syllabus_id: syllabusId, topic, subtopic, explanation }),
+    },
+    auth,
+  );
+}
+
+export function getSavedSyllabusExplanations(baseUrl: string, auth: AuthState, syllabusId: number) {
+  return requestWithAuth<SyllabusExplanationResponse[]>(
+    baseUrl,
+    `/api/interview/syllabus/${syllabusId}/explanations`,
+    {
+      method: "GET",
+    },
+    auth,
+  );
+}
+
 export { ApiError };
