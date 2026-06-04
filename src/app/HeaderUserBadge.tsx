@@ -65,7 +65,7 @@ export default function HeaderUserBadge() {
         title={displayName}
       >
         <span className="user-avatar">{initial}</span>
-        <span className="user-name">{displayName}</span>
+        <span className="user-name hide-on-mobile">{displayName}</span>
       </button>
 
       {isMenuOpen && (

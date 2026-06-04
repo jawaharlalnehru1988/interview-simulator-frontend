@@ -1421,3 +1421,33 @@ html[data-theme="dark"] .theme-toggle:hover {
 	to { transform: scale(1); opacity: 1; }
 }
 
+
+.mcq-active-layout {
+	display: grid;
+	grid-template-columns: 1fr 280px;
+	gap: 24px;
+	align-items: start;
+	max-width: 1000px;
+	margin: 0 auto;
+	width: 100%;
+}
+
+.show-on-mobile {
+	display: none !important;
+}
+
+@media (max-width: 1024px) {
+	.mcq-active-layout {
+		grid-template-columns: 1fr;
+	}
+	.hide-on-mobile {
+		display: none !important;
+	}
+	.show-on-mobile {
+		display: inline-flex !important;
+	}
+	span.show-on-mobile {
+		display: inline !important;
+	}
+}
+

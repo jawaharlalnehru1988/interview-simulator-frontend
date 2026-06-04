@@ -4,6 +4,7 @@ import { ReactNode, useState, useEffect } from "react";
 import TopNavbar from "./TopNavbar";
 import { ThemeProvider } from "@/lib/useTheme";
 import { TopicProvider, useTopics } from "@/context/TopicContext";
+import FloatingChatbot from "./FloatingChatbot";
 
 function AddTopicModal() {
   const { isAddTopicOpen, setIsAddTopicOpen, addTopic } = useTopics();
@@ -104,6 +105,7 @@ function SiteWrapper({ children }: { children: ReactNode }) {
       <TopNavbar />
       {children}
       <AddTopicModal />
+      <FloatingChatbot />
     </div>
   );
 }

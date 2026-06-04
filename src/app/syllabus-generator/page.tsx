@@ -9,6 +9,7 @@ import {
   toggleSyllabusChecklistItem,
   getSyllabusHistory,
   getSyllabusDetails,
+  deleteSyllabus,
   explainSyllabusSubtopic,
   saveSyllabusExplanation,
   getSavedSyllabusExplanations,
@@ -22,6 +23,9 @@ import {
   saveClientSession,
   type ClientSession,
 } from "@/lib/session";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import * as XLSX from "xlsx";
 
 const DEFAULT_API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
@@ -163,6 +167,17 @@ export default function SyllabusGeneratorPage() {
     });
   }
 
+  async function handleDeleteSyllabus(id: number) {
+    if (!confirm("Are you sure you want to delete this syllabus?")) return;
+    await runAction("Deleting Syllabus", async () => {
+      await deleteSyllabus(session.apiBaseUrl, authState, id);
+      if (activeSyllabus?.id === id) {
+        setActiveSyllabus(null);
+      }
+      await loadHistory();
+    });
+  }
+
   async function loadSavedExplanations() {
     if (!activeSyllabus || !session.accessToken) return;
     try {
@@ -241,6 +256,68 @@ export default function SyllabusGeneratorPage() {
       setModalSaved(true);
       await loadSavedExplanations();
     });
+  }
+
+  function handleExportPdf() {
+    if (!activeSyllabus) return;
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.text(`Syllabus: ${activeSyllabus.topic}`, 14, 22);
+    
+    let tableData: string[][] = [];
+    if (activeSyllabus.converted_to_checklist) {
+      tableData = activeSyllabus.checklist.map((item) => [
+        item.topic,
+        item.subtopic,
+        item.completed ? "[x]" : "[ ]",
+      ]);
+      autoTable(doc, {
+        startY: 30,
+        head: [["Chapter", "Subtopic", "Completed"]],
+        body: tableData,
+      });
+    } else {
+      activeSyllabus.syllabus.forEach(chapter => {
+        chapter.subtopics.forEach(sub => {
+          tableData.push([chapter.title, sub]);
+        });
+      });
+      autoTable(doc, {
+        startY: 30,
+        head: [["Chapter", "Subtopic"]],
+        body: tableData,
+      });
+    }
+    
+    doc.save(`${activeSyllabus.topic.replace(/\\s+/g, '_')}_Syllabus.pdf`);
+  }
+
+  function handleExportExcel() {
+    if (!activeSyllabus) return;
+    
+    let exportData: any[] = [];
+    if (activeSyllabus.converted_to_checklist) {
+      exportData = activeSyllabus.checklist.map((item) => ({
+        Chapter: item.topic,
+        Subtopic: item.subtopic,
+        Completed: item.completed ? "Yes" : "No",
+        CompletedAt: item.completed && item.completedAt ? new Date(item.completedAt).toLocaleString() : "",
+      }));
+    } else {
+      activeSyllabus.syllabus.forEach(chapter => {
+        chapter.subtopics.forEach(sub => {
+          exportData.push({
+            Chapter: chapter.title,
+            Subtopic: sub,
+          });
+        });
+      });
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Syllabus");
+    XLSX.writeFile(workbook, `${activeSyllabus.topic.replace(/\\s+/g, '_')}_Syllabus.xlsx`);
   }
 
   // Calculate Checklist progress
@@ -358,15 +435,23 @@ export default function SyllabusGeneratorPage() {
                   <p className="eyebrow">Active Plan</p>
                   <h2 style={{ margin: 0 }}>{activeSyllabus.topic}</h2>
                 </div>
-                {!activeSyllabus.converted_to_checklist && (
-                  <button
-                    className="secondary-button"
-                    onClick={handleConvertToChecklist}
-                    disabled={!!busyLabel}
-                  >
-                    {busyLabel === "Converting to Checklist" ? "Converting..." : "Convert to Tracker Checklist"}
+                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+                  <button className="ghost-button" onClick={handleExportPdf} title="Download PDF" style={{ padding: "6px 12px", fontSize: "14px", display: "flex", gap: "6px", alignItems: "center" }}>
+                    📄 PDF
                   </button>
-                )}
+                  <button className="ghost-button" onClick={handleExportExcel} title="Download Excel" style={{ padding: "6px 12px", fontSize: "14px", display: "flex", gap: "6px", alignItems: "center" }}>
+                    📊 Excel
+                  </button>
+                  {!activeSyllabus.converted_to_checklist && (
+                    <button
+                      className="secondary-button"
+                      onClick={handleConvertToChecklist}
+                      disabled={!!busyLabel}
+                    >
+                      {busyLabel === "Converting to Checklist" ? "Converting..." : "Convert to Tracker Checklist"}
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Progress Panel for Checklist */}
@@ -563,33 +648,47 @@ export default function SyllabusGeneratorPage() {
           <div className="summary-list">
             {history.length ? (
               history.map((item) => (
-                <button
+                <div
                   key={item.id}
-                  className={`summary-item summary-item-button ${activeSyllabus?.id === item.id ? "active" : ""}`}
-                  onClick={() => void handleSelectSyllabus(item.id)}
-                  disabled={!!busyLabel}
+                  className={`summary-item ${activeSyllabus?.id === item.id ? "active" : ""}`}
                   style={{
-                    textAlign: "left",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "flex-start",
                     padding: "12px",
                     border: activeSyllabus?.id === item.id ? "1px solid var(--accent-color)" : "1px solid rgba(255,255,255,0.05)",
                   }}
                 >
-                  <div className="summary-item-head">
-                    <strong>{item.topic}</strong>
-                    <span>
-                      {item.converted_to_checklist ? (
-                        <span className="text-accent" style={{ fontSize: "11px" }}>Checklist Active</span>
-                      ) : (
-                        <span className="muted-copy" style={{ fontSize: "11px" }}>Outline View</span>
-                      )}
-                    </span>
+                  <div
+                    onClick={() => void handleSelectSyllabus(item.id)}
+                    style={{ flex: 1, cursor: "pointer", textAlign: "left" }}
+                  >
+                    <div className="summary-item-head">
+                      <strong>{item.topic}</strong>
+                      <span>
+                        {item.converted_to_checklist ? (
+                          <span className="text-accent" style={{ fontSize: "11px" }}>Checklist Active</span>
+                        ) : (
+                          <span className="muted-copy" style={{ fontSize: "11px" }}>Outline View</span>
+                        )}
+                      </span>
+                    </div>
+                    {item.converted_to_checklist && item.checklist && (
+                      <small className="muted-copy">
+                        Progress: {item.checklist.filter((i) => i.completed).length} / {item.checklist.length} subtopics
+                      </small>
+                    )}
                   </div>
-                  {item.converted_to_checklist && item.checklist && (
-                    <small className="muted-copy">
-                      Progress: {item.checklist.filter((i) => i.completed).length} / {item.checklist.length} subtopics
-                    </small>
-                  )}
-                </button>
+                  <button
+                    className="ghost-button"
+                    title="Delete"
+                    onClick={() => void handleDeleteSyllabus(item.id)}
+                    disabled={!!busyLabel}
+                    style={{ padding: "4px 8px", fontSize: "14px", minHeight: "unset", height: "auto", marginLeft: "8px", color: "var(--error-color, #ef4444)" }}
+                  >
+                    🗑
+                  </button>
+                </div>
               ))
             ) : (
               <p className="muted-copy" style={{ padding: "12px", textAlign: "center" }}>

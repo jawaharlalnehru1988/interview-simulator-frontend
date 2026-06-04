@@ -345,7 +345,7 @@ export default function McqTestPage() {
 
         {/* State 2: Active Quiz View */}
         {quizActive && questions.length > 0 && (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 280px", gap: "24px", alignItems: "start", maxWidth: "1000px", margin: "0 auto", width: "100%" }}>
+          <div className="mcq-active-layout">
             
             {/* Left Column: Active Question */}
             <article className="card stack-card">

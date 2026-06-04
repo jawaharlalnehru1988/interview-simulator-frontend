@@ -438,7 +438,9 @@ async function performRequest(
   init?: RequestInit,
   accessToken?: string,
 ) {
-  const response = await fetch(`${normalizeBaseUrl(baseUrl)}${path}`, {
+  const url = `${normalizeBaseUrl(baseUrl)}${path}`;
+  console.log("Making request to:", url, "Method:", init?.method || "GET");
+  const response = await fetch(url, {
     ...init,
     headers: {
       "Content-Type": "application/json",
@@ -1002,6 +1004,12 @@ export function getSyllabusDetails(baseUrl: string, auth: AuthState, syllabusId:
   }, auth);
 }
 
+export function deleteSyllabus(baseUrl: string, auth: AuthState, syllabusId: number) {
+  return requestWithAuth<void>(baseUrl, `/api/interview/syllabus/${syllabusId}/`, {
+    method: "DELETE",
+  }, auth);
+}
+
 export type SyllabusExplanationResponse = {
   id: number;
   topic: string;
@@ -1054,6 +1062,35 @@ export function getSavedSyllabusExplanations(baseUrl: string, auth: AuthState, s
     `/api/interview/syllabus/${syllabusId}/explanations`,
     {
       method: "GET",
+    },
+    auth,
+  );
+}
+
+export type ChatMessage = {
+  role: string;
+  content: string;
+};
+
+export type ChatRequestPayload = {
+  messages: ChatMessage[];
+};
+
+export type ChatResponsePayload = {
+  response: string;
+};
+
+export function sendChatMessage(
+  baseUrl: string,
+  auth: AuthState,
+  payload: ChatRequestPayload,
+) {
+  return requestWithAuth<ChatResponsePayload>(
+    baseUrl,
+    "/api/chat",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
     },
     auth,
   );

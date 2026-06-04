@@ -298,11 +298,6 @@ export default function AspirationPage() {
             phased roadmap to help you reach your target role.
           </p>
         </div>
-        <div className="hero-links">
-          <Link className="secondary-button link-button" href="/job-analyzer">
-            Open JD analyzer
-          </Link>
-        </div>
       </section>
 
       {errorMessage ? <p className="banner error">{errorMessage}</p> : null}

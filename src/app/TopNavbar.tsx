@@ -62,14 +62,18 @@ export default function TopNavbar() {
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           {pathname !== "/" && (
             <Link className="nav-link" href="/" style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg className="hide-on-mobile" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="19" y1="12" x2="5" y2="12"></line>
                 <polyline points="12 19 5 12 12 5"></polyline>
               </svg>
-              Go Back
+              <svg className="show-on-mobile" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'none' }}>
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+              </svg>
+              <span className="hide-on-mobile">Go Back</span>
             </Link>
           )}
-          <Link className="brand-mark" href="/">
+          <Link className="brand-mark hide-on-mobile" href="/">
             Interview Simulator
           </Link>
         </div>
@@ -142,7 +146,7 @@ export default function TopNavbar() {
               style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}
               type="button"
             >
-              ➕ Add Topic
+              <span>➕</span><span className="hide-on-mobile">&nbsp;Add Topic</span>
             </button>
           )}
           <HeaderUserBadge />

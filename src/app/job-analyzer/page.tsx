@@ -152,21 +152,7 @@ export default function JobAnalyzerPage() {
 
   return (
     <main className="shell route-shell">
-      <section className="route-hero">
-        <div>
-          <p className="eyebrow">Career Strategy Module</p>
-          <h1>Job Description Analyzer</h1>
-          <p className="hero-copy">
-            Paste a JD and get recruiter intent, skill-priority tiers, salary disclosure extraction,
-            market demandable salary guidance, and practical recommendations before your interview.
-          </p>
-        </div>
-        <div className="hero-links">
-          <Link className="secondary-button link-button" href="/auth">
-            Open auth route
-          </Link>
-        </div>
-      </section>
+
 
       <section className="route-grid">
         <article className="card tall-card stack-card">
