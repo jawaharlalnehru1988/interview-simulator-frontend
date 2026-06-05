@@ -3,6 +3,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useSession } from "@/lib/useSession";
 import { sendChatMessage, type ChatMessage } from "@/lib/api";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeHighlight from "rehype-highlight";
+import "highlight.js/styles/atom-one-light.css";
 
 export default function FloatingChatbot() {
   const { session, isLoggedIn } = useSession();
@@ -45,6 +49,12 @@ export default function FloatingChatbot() {
   if (!isLoggedIn) {
     return null; // Don't show if not logged in
   }
+
+  const handleClearChat = () => {
+    setMessages([
+      { role: "assistant", content: "Hi! How can I help you today?" },
+    ]);
+  };
 
   const handleSend = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -121,12 +131,12 @@ export default function FloatingChatbot() {
       {/* Chat Window */}
       {isOpen && (
         <div
+          className="chatbot-window"
           style={{
             position: "fixed",
             bottom: "100px",
             right: "24px",
-            width: "350px",
-            height: "500px",
+            height: "600px",
             maxHeight: "calc(100vh - 120px)",
             backgroundColor: "var(--surface)",
             borderRadius: "16px",
@@ -152,20 +162,24 @@ export default function FloatingChatbot() {
             }}
           >
             <span>AI Assistant</span>
-            <button
-              onClick={() => setIsOpen(false)}
-              style={{
-                background: "transparent",
-                border: "none",
-                color: "white",
-                cursor: "pointer",
-              }}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
+            <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+              <button
+                onClick={() => setIsOpen(false)}
+                title="Close chat"
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color: "white",
+                  cursor: "pointer",
+                  display: "flex",
+                }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
           </div>
 
           {/* Messages */}
@@ -186,7 +200,18 @@ export default function FloatingChatbot() {
                   lineHeight: "1.4",
                 }}
               >
-                {msg.content}
+                {msg.role === "assistant" ? (
+                  <div className="markdown-body" style={{ overflowX: "auto" }}>
+                    <ReactMarkdown 
+                      remarkPlugins={[remarkGfm]}
+                      rehypePlugins={[[rehypeHighlight, { detect: true }]]}
+                    >
+                      {msg.content}
+                    </ReactMarkdown>
+                  </div>
+                ) : (
+                  msg.content
+                )}
               </div>
             ))}
             {isLoading && (
@@ -223,6 +248,37 @@ export default function FloatingChatbot() {
                 color: "var(--ink)",
               }}
             />
+            <button
+              type="button"
+              onClick={handleClearChat}
+              title="Clear chat"
+              style={{
+                backgroundColor: "var(--surface)",
+                color: "var(--muted)",
+                border: "1px solid var(--line)",
+                borderRadius: "50%",
+                width: "40px",
+                height: "40px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                transition: "color 0.2s, border-color 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = "var(--danger)";
+                e.currentTarget.style.borderColor = "var(--danger)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = "var(--muted)";
+                e.currentTarget.style.borderColor = "var(--line)";
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+            </button>
             <button
               type="submit"
               disabled={isLoading || !input.trim()}

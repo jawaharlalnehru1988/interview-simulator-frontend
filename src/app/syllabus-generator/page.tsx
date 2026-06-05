@@ -26,6 +26,10 @@ import {
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeHighlight from "rehype-highlight";
+import "highlight.js/styles/atom-one-light.css";
 
 const DEFAULT_API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
@@ -255,6 +259,24 @@ export default function SyllabusGeneratorPage() {
       );
       setModalSaved(true);
       await loadSavedExplanations();
+
+      // Automatically mark as complete if it's a checklist item
+      if (activeSyllabus.converted_to_checklist && activeSyllabus.checklist) {
+        const item = activeSyllabus.checklist.find(
+          (i) => i.topic === modalTopic && i.subtopic === modalSubtopic
+        );
+        if (item && !item.completed) {
+          const response = await toggleSyllabusChecklistItem(
+            session.apiBaseUrl,
+            authState,
+            activeSyllabus.id,
+            item.id,
+            true
+          );
+          setActiveSyllabus(response);
+          await loadHistory();
+        }
+      }
     });
   }
 
@@ -544,7 +566,7 @@ export default function SyllabusGeneratorPage() {
                                 disabled={!!busyLabel}
                                 style={{ padding: "4px 8px", fontSize: "12px", height: "auto", minHeight: "unset" }}
                               >
-                                Explain
+                                {savedLibrary.some(item => item.topic === chapter.title && item.subtopic === sub) ? "Go to topic" : "Explain"}
                               </button>
                             </li>
                           ))}
@@ -593,7 +615,8 @@ export default function SyllabusGeneratorPage() {
                                     style={{
                                       margin: 0,
                                       textDecoration: item.completed ? "line-through" : "none",
-                                      color: item.completed ? "rgba(255,255,255,0.5)" : "var(--foreground-color)",
+                                      color: item.completed ? "var(--muted)" : "var(--foreground-color)",
+                                      opacity: item.completed ? 0.6 : 1,
                                     }}
                                   >
                                     {item.subtopic}
@@ -611,7 +634,7 @@ export default function SyllabusGeneratorPage() {
                                   disabled={!!busyLabel}
                                   style={{ padding: "4px 8px", fontSize: "12px", height: "auto", minHeight: "unset" }}
                                 >
-                                  Explain
+                                  {savedLibrary.some(saved => saved.topic === item.topic && saved.subtopic === item.subtopic) ? "Go to topic" : "Explain"}
                                 </button>
                               </div>
                             </div>
@@ -705,40 +728,50 @@ export default function SyllabusGeneratorPage() {
           <div
             className="modal-content"
             onClick={(e) => e.stopPropagation()}
-            style={{ width: "min(720px, calc(100% - 32px))", maxHeight: "85vh", display: "flex", flexDirection: "column" }}
+            style={{ width: "min(720px, calc(100% - 32px))", maxHeight: "95vh", display: "flex", flexDirection: "column", padding: "20px" }}
           >
-            <div className="card-heading" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "16px", borderBottom: "1px solid rgba(255,255,255,0.08)", paddingBottom: "12px", marginBottom: "4px" }}>
-              <div>
-                <p className="eyebrow">{modalTopic}</p>
-                <h2 style={{ margin: 0, fontSize: "1.35rem" }}>{modalSubtopic}</h2>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", borderBottom: "1px solid rgba(255,255,255,0.08)", paddingBottom: "8px", marginBottom: "0px" }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: "8px", flex: 1, overflow: "hidden" }}>
+                <span className="text-accent" style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", whiteSpace: "nowrap" }}>
+                  {modalTopic}
+                </span>
+                <span style={{ fontSize: "1.1rem", fontWeight: "600", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {modalSubtopic}
+                </span>
               </div>
               <button
                 className="ghost-button"
                 onClick={() => setShowExplainModal(false)}
-                style={{ padding: "4px 10px", fontSize: "14px", height: "auto", minHeight: "unset" }}
+                style={{ padding: "4px 8px", fontSize: "14px", height: "auto", minHeight: "unset", flexShrink: 0 }}
               >
                 ✕
               </button>
             </div>
 
-            <div style={{ flex: 1, overflowY: "auto", paddingRight: "4px", margin: "12px 0" }}>
+            <div style={{ flex: 1, overflowY: "auto", paddingRight: "4px", margin: "8px 0" }}>
               {!modalExplanation && busyLabel === "Generating Explanation" ? (
                 <div className="stack-card" style={{ alignItems: "center", padding: "40px 0" }}>
                   <div className="loading-spinner" />
                   <p className="muted-copy">Generating AI explanation for {modalSubtopic}...</p>
                 </div>
               ) : (
-                <div className="coach-lesson">
-                  {renderMarkdown(modalExplanation)}
+                <div className="coach-lesson markdown-body" style={{ overflowX: "auto" }}>
+                  <ReactMarkdown 
+                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[[rehypeHighlight, { detect: true }]]}
+                  >
+                    {modalExplanation}
+                  </ReactMarkdown>
                 </div>
               )}
             </div>
 
-            <div className="button-row" style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: "16px", display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+            <div className="button-row" style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: "8px", display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "auto" }}>
               <button
                 className="ghost-button"
                 onClick={handleRegenerateExplanation}
                 disabled={busyLabel === "Generating Explanation"}
+                style={{ padding: "6px 12px", fontSize: "13px", height: "auto", minHeight: "32px" }}
               >
                 {busyLabel === "Generating Explanation" ? "Regenerating..." : "Regenerate"}
               </button>
@@ -746,12 +779,14 @@ export default function SyllabusGeneratorPage() {
                 className="primary-button"
                 onClick={handleSaveExplanation}
                 disabled={modalSaved || busyLabel === "Generating Explanation" || busyLabel === "Saving Explanation" || !modalExplanation}
+                style={{ padding: "6px 12px", fontSize: "13px", height: "auto", minHeight: "32px" }}
               >
                 {modalSaved ? "✓ Saved to Library" : busyLabel === "Saving Explanation" ? "Saving..." : "Save to Library"}
               </button>
               <button
                 className="secondary-button"
                 onClick={() => setShowExplainModal(false)}
+                style={{ padding: "6px 12px", fontSize: "13px", height: "auto", minHeight: "32px" }}
               >
                 Close
               </button>
@@ -821,8 +856,13 @@ function LibraryItem({
             paddingTop: "16px",
           }}
         >
-          <div className="coach-lesson">
-            {renderMarkdown(item.explanation)}
+          <div className="coach-lesson markdown-body" style={{ overflowX: "auto" }}>
+            <ReactMarkdown 
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[[rehypeHighlight, { detect: true }]]}
+            >
+              {item.explanation}
+            </ReactMarkdown>
           </div>
         </div>
       )}
@@ -830,164 +870,3 @@ function LibraryItem({
   );
 }
 
-// Regex-free lightweight markdown parser styling headers, list lines, and code blocks
-function renderMarkdown(md: string) {
-  if (!md) return null;
-  const lines = md.split("\n");
-  const elements: React.ReactNode[] = [];
-  let codeBlockLines: string[] = [];
-  let inCodeBlock = false;
-  let codeLang = "";
-  let listItems: string[] = [];
-  let inList = false;
-
-  const flushList = (key: string) => {
-    if (listItems.length > 0) {
-      elements.push(
-        <ul key={key} style={{ paddingLeft: "20px", margin: "8px 0", listStyleType: "disc" }}>
-          {listItems.map((item, idx) => {
-            return <li key={idx} style={{ margin: "4px 0" }}>{parseInlineMarkdown(item)}</li>;
-          })}
-        </ul>
-      );
-      listItems = [];
-      inList = false;
-    }
-  };
-
-  const flushCodeBlock = (key: string) => {
-    if (codeBlockLines.length > 0) {
-      elements.push(
-        <pre key={key}>
-          <code>
-            {codeBlockLines.join("\n")}
-          </code>
-        </pre>
-      );
-      codeBlockLines = [];
-      inCodeBlock = false;
-      codeLang = "";
-    }
-  };
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-
-    if (line.startsWith("```")) {
-      if (inCodeBlock) {
-        flushCodeBlock(`code-${i}`);
-      } else {
-        flushList(`list-before-code-${i}`);
-        inCodeBlock = true;
-        codeLang = line.replace("```", "").trim();
-      }
-      continue;
-    }
-
-    if (inCodeBlock) {
-      codeBlockLines.push(line);
-      continue;
-    }
-
-    if (line.trim().startsWith("- ") || line.trim().startsWith("* ")) {
-      if (!inList) {
-        inList = true;
-      }
-      const rawText = line.trim().substring(2);
-      listItems.push(rawText);
-      continue;
-    }
-
-    if (inList && line.trim() !== "") {
-      flushList(`list-flush-${i}`);
-    }
-
-    if (line.startsWith("### ")) {
-      elements.push(<h3 key={`h3-${i}`} style={{ color: "var(--accent-color, #a855f7)", margin: "16px 0 8px 0" }}>{parseInlineMarkdown(line.substring(4))}</h3>);
-      continue;
-    }
-    if (line.startsWith("## ")) {
-      elements.push(<h2 key={`h2-${i}`} style={{ color: "var(--accent-color, #a855f7)", margin: "20px 0 10px 0", fontSize: "1.2rem" }}>{parseInlineMarkdown(line.substring(3))}</h2>);
-      continue;
-    }
-    if (line.startsWith("# ")) {
-      elements.push(<h1 key={`h1-${i}`} style={{ color: "var(--accent-color, #a855f7)", margin: "24px 0 12px 0", fontSize: "1.4rem" }}>{parseInlineMarkdown(line.substring(2))}</h1>);
-      continue;
-    }
-
-    if (line.trim() === "") {
-      continue;
-    }
-
-    elements.push(<p key={`p-${i}`} style={{ margin: "10px 0", lineHeight: "1.6" }}>{parseInlineMarkdown(line)}</p>);
-  }
-
-  if (inList) {
-    flushList("list-final");
-  }
-  if (inCodeBlock) {
-    flushCodeBlock("code-final");
-  }
-
-  return <div>{elements}</div>;
-}
-
-function parseInlineMarkdown(text: string): React.ReactNode[] {
-  const parts: React.ReactNode[] = [];
-  let index = 0;
-  
-  while (index < text.length) {
-    const boldIndex = text.indexOf("**", index);
-    const codeIndex = text.indexOf("`", index);
-    
-    let firstIndex = -1;
-    let type: "bold" | "code" = "bold";
-    
-    if (boldIndex !== -1 && codeIndex !== -1) {
-      if (boldIndex < codeIndex) {
-        firstIndex = boldIndex;
-        type = "bold";
-      } else {
-        firstIndex = codeIndex;
-        type = "code";
-      }
-    } else if (boldIndex !== -1) {
-      firstIndex = boldIndex;
-      type = "bold";
-    } else if (codeIndex !== -1) {
-      firstIndex = codeIndex;
-      type = "code";
-    }
-    
-    if (firstIndex === -1) {
-      parts.push(text.substring(index));
-      break;
-    }
-    
-    if (firstIndex > index) {
-      parts.push(text.substring(index, firstIndex));
-    }
-    
-    if (type === "bold") {
-      const closingIndex = text.indexOf("**", firstIndex + 2);
-      if (closingIndex !== -1) {
-        parts.push(<strong key={firstIndex} style={{ color: "var(--accent-color, #a855f7)", fontWeight: "600" }}>{text.substring(firstIndex + 2, closingIndex)}</strong>);
-        index = closingIndex + 2;
-      } else {
-        parts.push("**");
-        index = firstIndex + 2;
-      }
-    } else {
-      const closingIndex = text.indexOf("`", firstIndex + 1);
-      if (closingIndex !== -1) {
-        parts.push(<code key={firstIndex} style={{ background: "rgba(168,85,247,0.08)", color: "#a855f7", padding: "2px 6px", borderRadius: "4px", fontSize: "0.9em", fontFamily: "monospace" }}>{text.substring(firstIndex + 1, closingIndex)}</code>);
-        index = closingIndex + 1;
-      } else {
-        parts.push("`");
-        index = firstIndex + 1;
-      }
-    }
-  }
-  
-  return parts;
-}
