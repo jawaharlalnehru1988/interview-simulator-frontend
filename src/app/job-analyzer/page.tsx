@@ -242,7 +242,7 @@ export default function JobAnalyzerPage() {
             <div>
               <strong>Strong Match</strong>
               <ul className="jd-chip-list">
-                {(analysis?.skill_tiers.strong_match ?? []).map((item) => (
+                {(analysis?.skill_tiers?.strong_match ?? []).map((item) => (
                   <li key={`strong-${item}`}>{item}</li>
                 ))}
               </ul>
@@ -250,7 +250,7 @@ export default function JobAnalyzerPage() {
             <div>
               <strong>Okay Match</strong>
               <ul className="jd-chip-list">
-                {(analysis?.skill_tiers.okay_match ?? []).map((item) => (
+                {(analysis?.skill_tiers?.okay_match ?? []).map((item) => (
                   <li key={`okay-${item}`}>{item}</li>
                 ))}
               </ul>
@@ -258,23 +258,23 @@ export default function JobAnalyzerPage() {
             <div>
               <strong>Low Priority</strong>
               <ul className="jd-chip-list">
-                {(analysis?.skill_tiers.low_priority ?? []).map((item) => (
+                {(analysis?.skill_tiers?.low_priority ?? []).map((item) => (
                   <li key={`low-${item}`}>{item}</li>
                 ))}
               </ul>
             </div>
             <div>
               <strong>Disclosed Salary</strong>
-              {analysis?.disclosed_salary.found ? (
+              {analysis?.disclosed_salary?.found ? (
                 <p className="muted-copy">
-                  {analysis.disclosed_salary.minimum} - {analysis.disclosed_salary.maximum}{" "}
-                  {analysis.disclosed_salary.unit} ({analysis.disclosed_salary.currency})
+                  {analysis?.disclosed_salary?.minimum} - {analysis?.disclosed_salary?.maximum}{" "}
+                  {analysis?.disclosed_salary?.unit} ({analysis?.disclosed_salary?.currency})
                 </p>
               ) : (
                 <p className="muted-copy">No explicit salary detected in this JD.</p>
               )}
-              {analysis?.disclosed_salary.raw_text && (
-                <small className="muted-copy">Source: {analysis.disclosed_salary.raw_text}</small>
+              {analysis?.disclosed_salary?.raw_text && (
+                <small className="muted-copy">Source: {analysis?.disclosed_salary?.raw_text}</small>
               )}
             </div>
           </div>
@@ -288,19 +288,19 @@ export default function JobAnalyzerPage() {
           {analysis ? (
             <>
               <p className="muted-copy">
-                <strong>{analysis.market_salary_estimate.role_focus}</strong>
+                <strong>{analysis?.market_salary_estimate?.role_focus}</strong>
               </p>
               <div className="score-orb">
                 <strong>
-                  {analysis.market_salary_estimate.demandable_min} - {analysis.market_salary_estimate.demandable_max}
+                  {analysis?.market_salary_estimate?.demandable_min} - {analysis?.market_salary_estimate?.demandable_max}
                 </strong>
-                <span>{analysis.market_salary_estimate.unit}</span>
+                <span>{analysis?.market_salary_estimate?.unit}</span>
               </div>
               <p className="muted-copy">
-                Confidence: {analysis.market_salary_estimate.confidence}
+                Confidence: {analysis?.market_salary_estimate?.confidence}
               </p>
               <ul className="list-block">
-                {analysis.market_salary_estimate.reasoning.map((item, index) => (
+                {(analysis?.market_salary_estimate?.reasoning ?? []).map((item, index) => (
                   <li key={`reason-${index}`}>{item}</li>
                 ))}
               </ul>
