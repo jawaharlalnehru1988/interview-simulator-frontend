@@ -1,5 +1,5 @@
 @import "tailwindcss";
-
+@plugin "@tailwindcss/typography";
 :root {
 	--background: #f4efe6;
 	--surface: rgba(255, 250, 243, 0.78);

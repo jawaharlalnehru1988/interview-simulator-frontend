@@ -88,4 +88,22 @@ export const APP_ROUTES: AppRoute[] = [
     showInDropdown: true,
     showAsCard: true,
   },
+  {
+    path: "/roadmaps",
+    name: "Roadmaps",
+    cardEyebrow: "Knowledge Hub",
+    cardTitle: "Roadmaps",
+    cardDescription: "Browse all generated roadmaps and explore subtopic explanations.",
+    showInDropdown: true,
+    showAsCard: true,
+  },
+  {
+    path: "/repository",
+    name: "Repository AI",
+    cardEyebrow: "Code Analysis",
+    cardTitle: "Repository AI Assistant",
+    cardDescription: "Scan GitHub repositories to understand their architecture and chat with an AI about the code structure and design.",
+    showInDropdown: true,
+    showAsCard: true,
+  },
 ];

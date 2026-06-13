@@ -5,6 +5,7 @@ import TopNavbar from "./TopNavbar";
 import { ThemeProvider } from "@/lib/useTheme";
 import { TopicProvider, useTopics } from "@/context/TopicContext";
 import FloatingChatbot from "./FloatingChatbot";
+import { usePathname } from "next/navigation";
 
 function AddTopicModal() {
   const { isAddTopicOpen, setIsAddTopicOpen, addTopic } = useTopics();
@@ -100,12 +101,15 @@ function AddTopicModal() {
 }
 
 function SiteWrapper({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  const hideGlobalChat = pathname?.startsWith("/repository");
+
   return (
     <div className="site-frame">
       <TopNavbar />
       {children}
       <AddTopicModal />
-      <FloatingChatbot />
+      {!hideGlobalChat && <FloatingChatbot />}
     </div>
   );
 }

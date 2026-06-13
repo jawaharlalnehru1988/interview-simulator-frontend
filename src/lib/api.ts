@@ -966,10 +966,10 @@ export type SyllabusResponse = {
 };
 
 // Syllabus Generator API Calls
-export function generateSyllabus(baseUrl: string, auth: AuthState, topic: string) {
+export function generateSyllabus(baseUrl: string, auth: AuthState, topic: string, description?: string) {
   return requestWithAuth<SyllabusResponse>(baseUrl, "/api/interview/syllabus/generate/", {
     method: "POST",
-    body: JSON.stringify({ topic }),
+    body: JSON.stringify({ topic, description }),
   }, auth);
 }
 
@@ -1094,6 +1094,67 @@ export function sendChatMessage(
     },
     auth,
   );
+}
+
+export function importSyllabusToRoadmap(baseUrl: string, auth: AuthState, syllabusId: number) {
+  return requestWithAuth<{ id: number }>(
+    baseUrl,
+    `/api/interview/roadmap/import/${syllabusId}`,
+    {
+      method: "POST",
+    },
+    auth,
+  );
+}
+
+// Roadmap Viewer Types
+export type RoadmapSubtopicItem = {
+  id: number;
+  subtopicName: string;
+  explanation?: string | null;
+};
+
+export type RoadmapChapterItem = {
+  id: number;
+  chapterName: string;
+  subtopics: RoadmapSubtopicItem[];
+};
+
+export type RoadmapItem = {
+  id: number;
+  mainTopic: string;
+  routerLink: string;
+  createdAt: string;
+  updatedAt: string;
+  chapters?: RoadmapChapterItem[];
+};
+
+export function getPublicRoadmaps(baseUrl: string) {
+  const url = `${baseUrl.replace(/\/$/, "")}/api/public/roadmaps/list`;
+  return fetch(url).then(async (response) => {
+    if (!response.ok) throw new Error("Failed to fetch roadmaps");
+    return response.json() as Promise<RoadmapItem[]>;
+  });
+}
+
+export function getPublicRoadmapDetails(baseUrl: string, id: number) {
+  const url = `${baseUrl.replace(/\/$/, "")}/api/public/roadmaps/${id}`;
+  return fetch(url).then(async (response) => {
+    if (!response.ok) throw new Error("Failed to fetch roadmap details");
+    return response.json() as Promise<RoadmapItem>;
+  });
+}
+
+export function explainRoadmapSubtopic(baseUrl: string, subtopicId: number) {
+  const url = `${baseUrl.replace(/\/$/, "")}/api/public/roadmaps/explain`;
+  return fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ subtopicId })
+  }).then(async (response) => {
+    if (!response.ok) throw new Error("Failed to fetch explanation");
+    return response.json() as Promise<{ explanation: string }>;
+  });
 }
 
 export { ApiError };

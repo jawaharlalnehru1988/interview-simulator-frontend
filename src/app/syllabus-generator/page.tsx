@@ -13,6 +13,7 @@ import {
   explainSyllabusSubtopic,
   saveSyllabusExplanation,
   getSavedSyllabusExplanations,
+  importSyllabusToRoadmap,
   type SyllabusResponse,
   type AuthState,
   type SyllabusExplanationResponse,
@@ -34,16 +35,21 @@ import "highlight.js/styles/atom-one-light.css";
 const DEFAULT_API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
 
+const DEFAULT_ROADMAP_API_BASE_URL =
+  process.env.NEXT_PUBLIC_ROADMAP_API_BASE_URL ?? "http://127.0.0.1:8085";
+
 export default function SyllabusGeneratorPage() {
   const [session, setSession] = useState<ClientSession>(() =>
     createDefaultSession(DEFAULT_API_BASE_URL),
   );
   const [ready, setReady] = useState(false);
   const [topic, setTopic] = useState("");
+  const [description, setDescription] = useState("");
   const [activeSyllabus, setActiveSyllabus] = useState<SyllabusResponse | null>(null);
   const [history, setHistory] = useState<SyllabusResponse[]>([]);
   const [busyLabel, setBusyLabel] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [roadmapSuccess, setRoadmapSuccess] = useState(false);
 
   const [showExplainModal, setShowExplainModal] = useState(false);
   const [modalTopic, setModalTopic] = useState("");
@@ -120,9 +126,10 @@ export default function SyllabusGeneratorPage() {
     }
 
     await runAction("Generating Syllabus", async () => {
-      const response = await generateSyllabus(session.apiBaseUrl, authState, topic.trim());
+      const response = await generateSyllabus(session.apiBaseUrl, authState, topic.trim(), description.trim());
       setActiveSyllabus(response);
       setTopic("");
+      setDescription("");
       setActiveTab("checklist");
       setSavedLibrary([]);
       await loadHistory();
@@ -139,6 +146,15 @@ export default function SyllabusGeneratorPage() {
       );
       setActiveSyllabus(response);
       await loadHistory();
+    });
+  }
+
+  async function handleAddToRoadmap() {
+    if (!activeSyllabus) return;
+    await runAction("Adding to Roadmap", async () => {
+      await importSyllabusToRoadmap(session.apiBaseUrl, authState, activeSyllabus.id);
+      setRoadmapSuccess(true);
+      setTimeout(() => setRoadmapSuccess(false), 5000);
     });
   }
 
@@ -401,6 +417,7 @@ export default function SyllabusGeneratorPage() {
       </section>
 
       {errorMessage && <div className="banner error">{errorMessage}</div>}
+      {roadmapSuccess && <div className="banner success">Syllabus successfully added to your roadmaps!</div>}
 
       <section className="route-grid">
         {/* Left Column - Form and Content */}
@@ -420,6 +437,18 @@ export default function SyllabusGeneratorPage() {
                 disabled={!!busyLabel}
               />
             </label>
+            <label className="field" htmlFor="description-input" style={{ marginTop: "16px" }}>
+              <span>Description / Extra Instructions (Optional)</span>
+              <textarea
+                id="description-input"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Example: Focus mainly on microservices architecture and deployment strategies..."
+                disabled={!!busyLabel}
+                rows={3}
+                style={{ resize: "vertical", minHeight: "80px", width: "100%", padding: "12px", background: "rgba(0,0,0,0.1)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "var(--foreground-color)", fontFamily: "inherit" }}
+              />
+            </label>
             <div className="button-row">
               <button className="primary-button" type="submit" disabled={!!busyLabel}>
                 {busyLabel === "Generating Syllabus" ? "Creating Syllabus..." : "Generate Syllabus"}
@@ -431,6 +460,7 @@ export default function SyllabusGeneratorPage() {
                   onClick={() => {
                     setActiveSyllabus(null);
                     setTopic("");
+                    setDescription("");
                   }}
                   disabled={!!busyLabel}
                 >
@@ -463,6 +493,15 @@ export default function SyllabusGeneratorPage() {
                   </button>
                   <button className="ghost-button" onClick={handleExportExcel} title="Download Excel" style={{ padding: "6px 12px", fontSize: "14px", display: "flex", gap: "6px", alignItems: "center" }}>
                     📊 Excel
+                  </button>
+                  <button
+                    className="ghost-button"
+                    onClick={handleAddToRoadmap}
+                    disabled={!!busyLabel}
+                    title="Add this syllabus to roadmap"
+                    style={{ padding: "6px 12px", fontSize: "14px", display: "flex", gap: "6px", alignItems: "center" }}
+                  >
+                    🗺️ Add to Roadmap
                   </button>
                   {!activeSyllabus.converted_to_checklist && (
                     <button

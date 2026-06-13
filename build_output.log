@@ -1,0 +1,41 @@
+
+> interview-simulater-frontend@0.1.0 build
+> next build
+
+▲ Next.js 16.2.3 (Turbopack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 6.3s
+  Running TypeScript ...
+  Finished TypeScript in 5.2s ...
+  Collecting page data using 7 workers ...
+  Generating static pages using 7 workers (0/17) ...
+  Generating static pages using 7 workers (4/17) 
+  Generating static pages using 7 workers (8/17) 
+  Generating static pages using 7 workers (12/17) 
+✓ Generating static pages using 7 workers (17/17) in 644ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ○ /aspiration
+├ ○ /auth
+├ ○ /coding
+├ ○ /hr-voice-call
+├ ○ /interview
+├ ○ /job-analyzer
+├ ○ /mcp
+├ ○ /mcq-test
+├ ○ /profile
+├ ○ /profile-settings
+├ ○ /repository
+├ ƒ /repository/[id]
+├ ○ /roadmaps
+└ ○ /syllabus-generator
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
