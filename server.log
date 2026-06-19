@@ -1,0 +1,6 @@
+nohup: ignoring input
+
+> interview-simulater-frontend@0.1.0 start
+> next start 3000
+
+Invalid project directory provided, no such directory: /var/www/interview-trainer/frontend/3000

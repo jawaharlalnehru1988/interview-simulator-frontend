@@ -15,6 +15,7 @@ import {
   getPublicRoadmaps, 
   getPublicRoadmapDetails, 
   explainRoadmapSubtopic,
+  exportRoadmapToDomain,
   RoadmapItem,
   RoadmapChapterItem,
   RoadmapSubtopicItem 
@@ -45,6 +46,10 @@ export default function RoadmapsPage() {
   const [explanationText, setExplanationText] = useState("");
   const [activeSubtopic, setActiveSubtopic] = useState<RoadmapSubtopicItem | null>(null);
   const [explainedSubtopics, setExplainedSubtopics] = useState<Set<number>>(new Set());
+
+  const [exportDomain, setExportDomain] = useState("asknehru");
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportMessage, setExportMessage] = useState("");
 
   useEffect(() => {
     if (ready && session?.apiBaseUrl) {
@@ -103,6 +108,20 @@ export default function RoadmapsPage() {
     }
   }
 
+  async function handleExportRoadmap() {
+    if (!session?.apiBaseUrl || !activeRoadmap) return;
+    setIsExporting(true);
+    setExportMessage("");
+    try {
+      const res = await exportRoadmapToDomain(session.apiBaseUrl, activeRoadmap.id, exportDomain);
+      setExportMessage(res.detail || "Successfully exported roadmap.");
+    } catch (e: any) {
+      setExportMessage(e.message || "Failed to export roadmap.");
+    } finally {
+      setIsExporting(false);
+    }
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 flex flex-col md:flex-row gap-8">
       {/* Sidebar List */}
@@ -128,13 +147,42 @@ export default function RoadmapsPage() {
       <div className="w-full md:w-2/3">
         {activeRoadmap ? (
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
-            <h1 className="text-3xl font-black text-slate-900 mb-8">{activeRoadmap.mainTopic} Roadmap</h1>
+            <div className="flex flex-wrap items-center justify-between mb-8 gap-4">
+              <h1 className="text-3xl font-black text-slate-900">{activeRoadmap.mainTopic} Roadmap</h1>
+              
+              <div className="flex items-center gap-2">
+                <select 
+                  className="border border-slate-300 rounded-md px-3 py-2 text-sm bg-white text-slate-700"
+                  value={exportDomain}
+                  onChange={(e) => setExportDomain(e.target.value)}
+                  disabled={isExporting}
+                >
+                  <option value="asknehru">Asknehru Platform</option>
+                  <option value="askharekrishna">AskHarekrishna</option>
+                  <option value="brahmacharya">Brahmacharya</option>
+                  <option value="yoga">Yoga Platform</option>
+                </select>
+                <button
+                  onClick={handleExportRoadmap}
+                  disabled={isExporting}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md font-medium text-sm transition-colors disabled:opacity-50 whitespace-nowrap"
+                >
+                  {isExporting ? "Exporting..." : "Export Roadmap"}
+                </button>
+              </div>
+            </div>
+            
+            {exportMessage && (
+              <div className={`p-4 mb-6 rounded-md ${exportMessage.includes('successfully') || exportMessage.includes('Successfully') ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+                {exportMessage}
+              </div>
+            )}
             
             <div className="space-y-6">
               {activeRoadmap.chapters?.map((chapter: RoadmapChapterItem, i: number) => (
                 <div key={chapter.id} className="bg-slate-50 rounded-xl p-6 border border-slate-100">
                   <h2 className="text-xl font-bold text-slate-800 mb-4">
-                    Chapter {i + 1}: {chapter.chapterName}
+                    Chapter {i + 1}: {chapter.chapterName.replace(/^(Chapter\s*\d+:\s*)+/i, '')}
                   </h2>
                   <ul className="space-y-3">
                     {chapter.subtopics.map((subtopic: RoadmapSubtopicItem) => (

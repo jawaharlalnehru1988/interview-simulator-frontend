@@ -45,6 +45,8 @@ export default function SyllabusGeneratorPage() {
   const [ready, setReady] = useState(false);
   const [topic, setTopic] = useState("");
   const [description, setDescription] = useState("");
+  const [sourceMode, setSourceMode] = useState<"topic" | "text">("topic");
+  const [sourceText, setSourceText] = useState("");
   const [activeSyllabus, setActiveSyllabus] = useState<SyllabusResponse | null>(null);
   const [history, setHistory] = useState<SyllabusResponse[]>([]);
   const [busyLabel, setBusyLabel] = useState("");
@@ -126,10 +128,11 @@ export default function SyllabusGeneratorPage() {
     }
 
     await runAction("Generating Syllabus", async () => {
-      const response = await generateSyllabus(session.apiBaseUrl, authState, topic.trim(), description.trim());
+      const response = await generateSyllabus(session.apiBaseUrl, authState, topic.trim(), description.trim(), sourceMode === "text" ? sourceText.trim() : undefined);
       setActiveSyllabus(response);
       setTopic("");
       setDescription("");
+      setSourceText("");
       setActiveTab("checklist");
       setSavedLibrary([]);
       await loadHistory();
@@ -426,17 +429,49 @@ export default function SyllabusGeneratorPage() {
             <p className="eyebrow">Generator</p>
             <h2>Create New Learning Path</h2>
           </div>
+          <div style={{ display: "flex", gap: "16px", marginBottom: "16px", borderBottom: "1px solid var(--line)", paddingBottom: "8px" }}>
+            <button
+              type="button"
+              style={{ fontWeight: "bold", background: "none", border: "none", cursor: "pointer", borderBottom: sourceMode === "topic" ? "2px solid var(--accent)" : "2px solid transparent", color: sourceMode === "topic" ? "var(--accent)" : "var(--muted)", transition: "all 0.2s ease" }}
+              onClick={() => setSourceMode("topic")}
+            >
+              By Topic
+            </button>
+            <button
+              type="button"
+              style={{ fontWeight: "bold", background: "none", border: "none", cursor: "pointer", borderBottom: sourceMode === "text" ? "2px solid var(--accent)" : "2px solid transparent", color: sourceMode === "text" ? "var(--accent)" : "var(--muted)", transition: "all 0.2s ease" }}
+              onClick={() => setSourceMode("text")}
+            >
+              From Text
+            </button>
+          </div>
           <form className="stack-card" onSubmit={handleGenerate}>
             <label className="field" htmlFor="topic-input">
-              <span>Broader Topic</span>
+              <span>{sourceMode === "topic" ? "Broader Topic" : "Topic (for Context)"}</span>
               <input
                 id="topic-input"
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
-                placeholder="Example: Spring Boot, Next.js, Kubernetes, Rust Lang"
+                placeholder={sourceMode === "topic" ? "Example: Spring Boot, Next.js, Kubernetes" : "Example: Nectar of Devotion"}
                 disabled={!!busyLabel}
               />
             </label>
+
+            {sourceMode === "text" && (
+              <label className="field" htmlFor="sourcetext-input" style={{ marginTop: "16px" }}>
+                <span>Source Material / Excerpts</span>
+                <textarea
+                  id="sourcetext-input"
+                  value={sourceText}
+                  onChange={(e) => setSourceText(e.target.value)}
+                  placeholder="Paste text excerpts from a book or document here..."
+                  disabled={!!busyLabel}
+                  rows={6}
+                  style={{ resize: "vertical", minHeight: "120px", width: "100%", padding: "12px", background: "rgba(0,0,0,0.1)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "var(--foreground-color)", fontFamily: "inherit" }}
+                />
+              </label>
+            )}
+
             <label className="field" htmlFor="description-input" style={{ marginTop: "16px" }}>
               <span>Description / Extra Instructions (Optional)</span>
               <textarea

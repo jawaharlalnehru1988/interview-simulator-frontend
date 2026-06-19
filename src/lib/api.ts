@@ -966,10 +966,10 @@ export type SyllabusResponse = {
 };
 
 // Syllabus Generator API Calls
-export function generateSyllabus(baseUrl: string, auth: AuthState, topic: string, description?: string) {
+export function generateSyllabus(baseUrl: string, auth: AuthState, topic: string, description?: string, sourceText?: string) {
   return requestWithAuth<SyllabusResponse>(baseUrl, "/api/interview/syllabus/generate/", {
     method: "POST",
-    body: JSON.stringify({ topic, description }),
+    body: JSON.stringify({ topic, description, sourceText }),
   }, auth);
 }
 
@@ -996,6 +996,13 @@ export function getSyllabusHistory(baseUrl: string, auth: AuthState) {
   return requestWithAuth<SyllabusResponse[]>(baseUrl, "/api/interview/syllabus/history/", {
     method: "GET",
   }, auth);
+}
+
+export function exportRoadmapToDomain(baseUrl: string, roadmapId: number, domain: string) {
+  return request<{ detail: string }>(baseUrl, `/api/public/roadmaps/${roadmapId}/export`, {
+    method: "POST",
+    body: JSON.stringify({ domain }),
+  });
 }
 
 export function getSyllabusDetails(baseUrl: string, auth: AuthState, syllabusId: number) {

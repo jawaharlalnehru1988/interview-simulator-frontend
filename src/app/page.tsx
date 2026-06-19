@@ -36,16 +36,18 @@ export default function Home() {
         ))}
 
         <article className="card stack-card">
-          <div className="card-heading">
-            <p className="eyebrow">LLM Readiness</p>
-            <h2>Waiting on provider details</h2>
-          </div>
-          <p className="muted-copy">
-            The frontend already renders structured evaluation output from the backend. Once you give
-            the purchased LLM provider details, the same UI will show real model-backed scoring with
-            no route redesign needed.
-          </p>
-        </article>
+            <div className="card-heading">
+              <p className="eyebrow">AI Analysis</p>
+              <h2>Resume Analyzer</h2>
+            </div>
+            <p className="muted-copy">
+              Upload your resume as a PDF. The system extracts the text and generates 15 tailored
+              interview questions — technical, behavioral, and situational — just like a real interviewer would ask.
+            </p>
+            <Link className="ghost-button link-button" href="/resume-analyzer">
+              Go to Resume Analyzer
+            </Link>
+          </article>
       </section>
     </main>
   );
