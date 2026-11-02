@@ -22,7 +22,7 @@ export const APP_ROUTES: AppRoute[] = [
     cardTitle: "Interview Workspace",
     cardDescription: "Start interviews, fetch questions, submit answers, and inspect summary reports from a route dedicated to authenticated interview operations.",
     showInDropdown: true,
-    showAsCard: true,
+    showAsCard: false,
   },
   {
     path: "/mcq-test",
@@ -31,7 +31,7 @@ export const APP_ROUTES: AppRoute[] = [
     cardTitle: "MCQ Test",
     cardDescription: "Test your skills with adaptive, AI-generated multiple choice questions tailored to your target difficulty level.",
     showInDropdown: true,
-    showAsCard: true,
+    showAsCard: false,
   },
   {
     path: "/coding",
@@ -40,7 +40,7 @@ export const APP_ROUTES: AppRoute[] = [
     cardTitle: "Coding Workspace",
     cardDescription: "Write code, evaluate your strategies, and receive code syntax highlighting with detailed reviews of your solutions.",
     showInDropdown: true,
-    showAsCard: true,
+    showAsCard: false,
   },
 
   {
@@ -50,7 +50,7 @@ export const APP_ROUTES: AppRoute[] = [
     cardTitle: "JD Analyzer",
     cardDescription: "Analyze recruiter intent, split skills by priority, detect compensation details, and get actionable recommendations before applying.",
     showInDropdown: true,
-    showAsCard: true,
+    showAsCard: false,
   },
   {
     path: "/resume-analyzer",
@@ -59,7 +59,7 @@ export const APP_ROUTES: AppRoute[] = [
     cardTitle: "Resume Analyzer",
     cardDescription: "Upload your resume to extract text, generate custom interview questions, and practice with AI-generated answers.",
     showInDropdown: true,
-    showAsCard: true,
+    showAsCard: false,
   },
   {
     path: "/aspiration",
@@ -68,7 +68,7 @@ export const APP_ROUTES: AppRoute[] = [
     cardTitle: "Aspiration Planner",
     cardDescription: "Capture your current position, target role, timeline, and constraints to build a practical roadmap with phased milestones.",
     showInDropdown: true,
-    showAsCard: true,
+    showAsCard: false,
   },
   {
     path: "/syllabus-generator",
@@ -77,7 +77,7 @@ export const APP_ROUTES: AppRoute[] = [
     cardTitle: "Syllabus Generator",
     cardDescription: "Type any broader topic, generate a structured syllabus of topics and subtopics, and convert it into a tracking checklist with completion dates.",
     showInDropdown: true,
-    showAsCard: true,
+    showAsCard: false,
   },
   {
     path: "/profile-settings",
@@ -86,7 +86,7 @@ export const APP_ROUTES: AppRoute[] = [
     cardTitle: "Profile Settings",
     cardDescription: "Fill complete career details in multiple sections so AI can ask realistic recruiter screening questions aligned to your background.",
     showInDropdown: true,
-    showAsCard: true,
+    showAsCard: false,
   },
   {
     path: "/documents",
@@ -104,7 +104,7 @@ export const APP_ROUTES: AppRoute[] = [
     cardTitle: "HR Voice Call",
     cardDescription: "Simulate recruiter call questions based on your profile, aspiration, and JD analysis, then receive pass/fail guidance.",
     showInDropdown: true,
-    showAsCard: true,
+    showAsCard: false,
   },
   {
     path: "/roadmaps",
@@ -113,7 +113,7 @@ export const APP_ROUTES: AppRoute[] = [
     cardTitle: "Roadmaps",
     cardDescription: "Browse all generated roadmaps and explore subtopic explanations.",
     showInDropdown: true,
-    showAsCard: true,
+    showAsCard: false,
   },
   {
     path: "/repository",
@@ -122,6 +122,6 @@ export const APP_ROUTES: AppRoute[] = [
     cardTitle: "Repository AI Assistant",
     cardDescription: "Scan GitHub repositories to understand their architecture and chat with an AI about the code structure and design.",
     showInDropdown: true,
-    showAsCard: true,
+    showAsCard: false,
   },
 ];

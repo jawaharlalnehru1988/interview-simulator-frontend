@@ -34,20 +34,6 @@ export default function Home() {
             </Link>
           </article>
         ))}
-
-        <article className="card stack-card">
-            <div className="card-heading">
-              <p className="eyebrow">AI Analysis</p>
-              <h2>Resume Analyzer</h2>
-            </div>
-            <p className="muted-copy">
-              Upload your resume as a PDF. The system extracts the text and generates 15 tailored
-              interview questions — technical, behavioral, and situational — just like a real interviewer would ask.
-            </p>
-            <Link className="ghost-button link-button" href="/resume-analyzer">
-              Go to Resume Analyzer
-            </Link>
-          </article>
       </section>
     </main>
   );
