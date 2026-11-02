@@ -3,8 +3,6 @@ import React, { FormEvent } from "react";
 interface InterviewSetupProps {
   session: { topic: string; roundType: string };
   updateSession: (updates: Partial<{ topic: string; roundType: string }>) => void;
-  topics: { id: number; name: string; description: string }[];
-  setIsAddTopicOpen: (open: boolean) => void;
   busyLabel: string;
   handleStartInterview: (event: FormEvent<HTMLFormElement>) => Promise<void>;
 }
@@ -12,8 +10,6 @@ interface InterviewSetupProps {
 export function InterviewSetup({
   session,
   updateSession,
-  topics,
-  setIsAddTopicOpen,
   busyLabel,
   handleStartInterview,
 }: InterviewSetupProps) {
@@ -26,23 +22,23 @@ export function InterviewSetup({
       <form className="stack-card" onSubmit={handleStartInterview}>
         <label className="field">
           <span>Topic</span>
-          <select
+          <textarea
             value={session.topic}
-            onChange={(event) => {
-              if (event.target.value === "add_new_topic") {
-                setIsAddTopicOpen(true);
-              } else {
-                updateSession({ topic: event.target.value });
-              }
+            onChange={(event) => updateSession({ topic: event.target.value })}
+            placeholder="Type your topic here (e.g. Java 8, React, Next.js, System Design)..."
+            rows={3}
+            required
+            className="w-full p-2 border rounded"
+            style={{ 
+              width: "100%", 
+              padding: "10px", 
+              borderRadius: "8px", 
+              border: "1px solid #ccc", 
+              minHeight: "80px", 
+              outline: "none", 
+              resize: "vertical" 
             }}
-          >
-            {topics.map((item) => (
-              <option key={item.id} value={item.name}>
-                {item.name}
-              </option>
-            ))}
-            <option value="add_new_topic">➕ Add new topic...</option>
-          </select>
+          />
         </label>
         <label className="field">
           <span>Round type</span>

@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
-import { useTopics } from "@/context/TopicContext";
 
 import {
   ApiError,
@@ -65,9 +64,6 @@ const PREDEFINED_TOPICS = [
 ];
 
 export default function InterviewPage() {
-  const { topics, setIsAddTopicOpen } = useTopics();
-  const [prevTopicsLength, setPrevTopicsLength] = useState(0);
-
   const [session, setSession] = useState<ClientSession>(() =>
     createDefaultSession(DEFAULT_API_BASE_URL),
   );
@@ -75,17 +71,6 @@ export default function InterviewPage() {
   const [currentQuestion, setCurrentQuestion] = useState<NextQuestionResponse | null>(null);
   const [answerText, setAnswerText] = useState("");
   const [lastEvaluation, setLastEvaluation] = useState<EvaluationResult | null>(null);
-
-  useEffect(() => {
-    if (topics.length > prevTopicsLength) {
-      if (prevTopicsLength > 0) {
-        updateSession({ topic: topics[0].name });
-      } else if (!session.topic || !topics.some(t => t.name === session.topic)) {
-        updateSession({ topic: topics[0].name });
-      }
-    }
-    setPrevTopicsLength(topics.length);
-  }, [topics, prevTopicsLength, session.topic]);
   const [summary, setSummary] = useState<InterviewSummaryResponse | null>(null);
   const [history, setHistory] = useState<InterviewHistoryItem[]>([]);
   const [showSuggestedAnswer, setShowSuggestedAnswer] = useState(false);
@@ -423,8 +408,6 @@ export default function InterviewPage() {
         <InterviewSetup
           session={session}
           updateSession={updateSession}
-          topics={topics}
-          setIsAddTopicOpen={setIsAddTopicOpen}
           busyLabel={busyLabel}
           handleStartInterview={handleStartInterview}
         />

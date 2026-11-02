@@ -4,27 +4,28 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 
 import { ApiError, loginUser, registerUser } from "@/lib/api";
+import GoogleSignInButton from "@/components/GoogleSignInButton";
 import {
-  createDefaultSession,
   loadClientSession,
   saveClientSession,
-  type ClientSession,
 } from "@/lib/session";
+import { useSession } from "@/lib/useSession";
 
 const DEFAULT_API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
 
 export default function AuthPage() {
   const router = useRouter();
-  const [session, setSession] = useState<ClientSession>(() =>
-    createDefaultSession(DEFAULT_API_BASE_URL),
-  );
+  const { session: currentSession, isLoggedIn } = useSession();
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [busyLabel, setBusyLabel] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [ready, setReady] = useState(false);
+
   const authMode: "login" | "register" =
     typeof window !== "undefined" &&
     new URLSearchParams(window.location.search).get("mode") === "register"
@@ -32,20 +33,28 @@ export default function AuthPage() {
       : "login";
 
   useEffect(() => {
-    setSession(loadClientSession(DEFAULT_API_BASE_URL));
+    const loaded = loadClientSession(DEFAULT_API_BASE_URL);
+    if (loaded.username) {
+      setUsername(loaded.username);
+    }
+    if (loaded.email) {
+      setEmail(loaded.email);
+    }
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("reason") === "timeout") {
+      setErrorMessage("Your session timed out after 30 minutes of inactivity. Please log in again to continue.");
+    }
     setReady(true);
   }, []);
 
+  // Redirect to dashboard immediately if already authenticated
   useEffect(() => {
-    if (!ready) {
-      return;
+    if (ready && isLoggedIn) {
+      const searchParams = new URLSearchParams(window.location.search);
+      const redirectTarget = searchParams.get("redirect") || "/";
+      window.location.href = redirectTarget;
     }
-    saveClientSession(session);
-  }, [ready, session]);
-
-  function updateSession(patch: Partial<ClientSession>) {
-    setSession((current) => ({ ...current, ...patch }));
-  }
+  }, [ready, isLoggedIn]);
 
   async function runAction(label: string, action: () => Promise<void>) {
     setBusyLabel(label);
@@ -71,9 +80,10 @@ export default function AuthPage() {
     event.preventDefault();
 
     await runAction("Register", async () => {
-      const response = await registerUser(session.apiBaseUrl, {
-        username: session.username,
-        email: session.email,
+      const apiBaseUrl = currentSession.apiBaseUrl || DEFAULT_API_BASE_URL;
+      const response = await registerUser(apiBaseUrl, {
+        username: username.trim(),
+        email: email.trim(),
         password,
       });
       setSuccessMessage(`Created user ${response.username}. You can log in now.`);
@@ -84,23 +94,47 @@ export default function AuthPage() {
     event.preventDefault();
 
     await runAction("Login", async () => {
-      const response = await loginUser(session.apiBaseUrl, {
-        username: session.username,
+      const apiBaseUrl = currentSession.apiBaseUrl || DEFAULT_API_BASE_URL;
+      const response = await loginUser(apiBaseUrl, {
+        username: username.trim(),
         password,
       });
-      updateSession({
+      saveClientSession({
+        ...currentSession,
+        username: username.trim(),
         accessToken: response.access,
         refreshToken: response.refresh,
+        loginTimestamp: Date.now(),
       });
-      setSuccessMessage("Login successful. Redirecting to the interview workspace.");
-      router.push("/interview");
+      setSuccessMessage("Login successful. Redirecting to dashboard...");
+      const searchParams = new URLSearchParams(window.location.search);
+      const redirectTarget = searchParams.get("redirect") || "/";
+      window.location.href = redirectTarget;
     });
+  }
+
+  if (ready && isLoggedIn) {
+    return (
+      <main className="shell route-shell auth-page">
+        <section className="route-grid auth-grid-center">
+          <article className="card stack-card auth-card" style={{ textAlign: "center", padding: "40px 24px" }}>
+            <div className="card-heading" style={{ justifyContent: "center" }}>
+              <h2>Welcome back, {currentSession.username || "User"}!</h2>
+            </div>
+            <p className="muted-copy">You are already authenticated. Redirecting to your dashboard...</p>
+            <div style={{ marginTop: "16px" }}>
+              <a href="/" className="primary-button link-button">
+                Go to Dashboard
+              </a>
+            </div>
+          </article>
+        </section>
+      </main>
+    );
   }
 
   return (
     <main className="shell route-shell auth-page">
-
-
       {errorMessage ? <p className="banner error">{errorMessage}</p> : null}
       {successMessage ? <p className="banner success">{successMessage}</p> : null}
 
@@ -117,8 +151,8 @@ export default function AuthPage() {
               <span>Username</span>
               <input
                 required
-                value={session.username}
-                onChange={(event) => updateSession({ username: event.target.value })}
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
               />
             </label>
             {authMode === "register" ? (
@@ -127,8 +161,8 @@ export default function AuthPage() {
                 <input
                   type="email"
                   required
-                  value={session.email}
-                  onChange={(event) => updateSession({ email: event.target.value })}
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
                 />
               </label>
             ) : null}
@@ -176,6 +210,16 @@ export default function AuthPage() {
             <button className="primary-button" disabled={Boolean(busyLabel)} type="submit">
               {authMode === "login" ? "Log in" : "Register user"}
             </button>
+
+            <div style={{ display: "flex", alignItems: "center", margin: "16px 0", gap: "12px" }}>
+              <div style={{ flex: 1, height: "1px", backgroundColor: "var(--border, #e5e7eb)" }} />
+              <span style={{ fontSize: "12px", color: "var(--text-muted, #9ca3af)", fontWeight: 500 }}>OR</span>
+              <div style={{ flex: 1, height: "1px", backgroundColor: "var(--border, #e5e7eb)" }} />
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              <GoogleSignInButton redirectAfterLogin="/" buttonText="Continue with Google" />
+            </div>
           </form>
         </article>
       </section>

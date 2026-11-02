@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "@/lib/useSession";
 import HeaderUserBadge from "./HeaderUserBadge";
+import GoogleSignInButton from "@/components/GoogleSignInButton";
 import { useTopics } from "@/context/TopicContext";
 import { APP_ROUTES } from "@/lib/routes";
 
@@ -148,6 +149,11 @@ export default function TopNavbar() {
             >
               <span>➕</span><span className="hide-on-mobile">&nbsp;Add Topic</span>
             </button>
+          )}
+          {!isLoggedIn && !isAuthPage && (
+            <div className="navbar-google-auth" style={{ display: "inline-flex", alignItems: "center", marginLeft: "4px" }}>
+              <GoogleSignInButton buttonText="Google" redirectAfterLogin="/" />
+            </div>
           )}
           <HeaderUserBadge />
         </div>

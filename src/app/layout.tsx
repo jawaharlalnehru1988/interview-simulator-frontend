@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Cormorant_Garamond, Space_Grotesk } from "next/font/google";
 import ClientWrapper from "./ClientWrapper";
 import "./globals.css";
@@ -31,6 +32,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${displayFont.variable} ${bodyFont.variable}`}>
+        <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" />
         <ClientWrapper>{children}</ClientWrapper>
       </body>
     </html>

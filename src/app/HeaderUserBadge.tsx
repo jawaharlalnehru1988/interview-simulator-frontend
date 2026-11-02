@@ -1,7 +1,5 @@
 "use client";
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useMemo, useState, useRef, useEffect } from "react";
 import { useSession } from "@/lib/useSession";
 
@@ -9,7 +7,6 @@ export default function HeaderUserBadge() {
   const { session, isLoggedIn, logout } = useSession();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -42,17 +39,26 @@ export default function HeaderUserBadge() {
   }, [isMenuOpen]);
 
   const displayName = useMemo(() => {
-    const username = session.username.trim();
+    const username = (session.username ?? "").trim();
     if (isLoggedIn && username) {
       return username;
     }
     return "";
   }, [isLoggedIn, session.username]);
 
-  const initial = useMemo(() => displayName.charAt(0).toUpperCase() || "G", [displayName]);
+  const initial = useMemo(() => displayName.charAt(0).toUpperCase() || "U", [displayName]);
 
-  if (!isLoggedIn) {
+  // Immediately render nothing if logged out
+  if (!isLoggedIn || !displayName) {
     return null;
+  }
+
+  const userPicture = session.picture;
+
+  function handleLogout() {
+    logout();
+    setIsMenuOpen(false);
+    window.location.href = "/auth?mode=login";
   }
 
   return (
@@ -64,26 +70,35 @@ export default function HeaderUserBadge() {
         aria-haspopup="true"
         title={displayName}
       >
-        <span className="user-avatar">{initial}</span>
+        {userPicture ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={userPicture}
+            alt={displayName}
+            style={{
+              width: "28px",
+              height: "28px",
+              borderRadius: "50%",
+              objectFit: "cover",
+              border: "1.5px solid #3b82f6",
+              display: "inline-block",
+            }}
+          />
+        ) : (
+          <span className="user-avatar">{initial}</span>
+        )}
         <span className="user-name hide-on-mobile">{displayName}</span>
       </button>
 
       {isMenuOpen && (
         <div className="user-menu-overlay">
-
-
           <button
+            type="button"
             className="user-menu-item logout"
-            onClick={() => {
-              logout();
-              setIsMenuOpen(false);
-              router.push("/auth");
-            }}
+            onClick={handleLogout}
           >
             Logout
           </button>
-
-
         </div>
       )}
     </div>

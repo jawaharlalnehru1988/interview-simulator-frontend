@@ -6,6 +6,7 @@ import {
   createDefaultSession,
   loadClientSession,
   clearClientSession as clearSession,
+  isSessionExpired,
   type ClientSession,
 } from "./session";
 
@@ -21,6 +22,11 @@ export function useSession() {
     setSession(loadClientSession(DEFAULT_API_BASE_URL));
   }, []);
 
+  const logout = useCallback(() => {
+    clearSession(DEFAULT_API_BASE_URL);
+    setSession(createDefaultSession(DEFAULT_API_BASE_URL));
+  }, []);
+
   useEffect(() => {
     refresh();
 
@@ -34,17 +40,23 @@ export function useSession() {
     window.addEventListener(SESSION_UPDATED_EVENT, handleSessionUpdate);
     window.addEventListener("storage", handleStorageChange);
 
+    // Active heartbeat: check every 15 seconds if 30-min timeout occurred
+    const interval = setInterval(() => {
+      const current = loadClientSession(DEFAULT_API_BASE_URL);
+      if (current.accessToken && isSessionExpired(current)) {
+        logout();
+        window.location.href = "/auth?mode=login&reason=timeout";
+      }
+    }, 15000);
+
     return () => {
       window.removeEventListener(SESSION_UPDATED_EVENT, handleSessionUpdate);
       window.removeEventListener("storage", handleStorageChange);
+      clearInterval(interval);
     };
-  }, [refresh]);
+  }, [refresh, logout]);
 
-  const logout = useCallback(() => {
-    clearSession(DEFAULT_API_BASE_URL);
-  }, []);
-
-  const isLoggedIn = !!(session.accessToken && session.username.trim());
+  const isLoggedIn = Boolean(session.accessToken && session.username && session.username.trim().length > 0);
 
   return {
     session,
